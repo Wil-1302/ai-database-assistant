@@ -108,6 +108,23 @@ function obtenerFilas(nombreTabla) {
 }
 
 /**
+ * Devuelve todas las tablas con sus columnas y filas completas.
+ * Usado por el ejecutor SQL para construir la base de datos en memoria.
+ * @returns {{ nombre: string, columnas: { nombre: string, tipo: string }[], filas: Record<string,string>[] }[]}
+ */
+function obtenerTodosLosDatos() {
+  const resultado = [];
+  for (const [nombre, datos] of tablas.entries()) {
+    resultado.push({
+      nombre,
+      columnas: datos.columnas,
+      filas:    datos.filas,
+    });
+  }
+  return resultado;
+}
+
+/**
  * Indica si hay algún archivo cargado.
  * @returns {boolean}
  */
@@ -115,4 +132,33 @@ function hayDatosCargados() {
   return tablas.size > 0;
 }
 
-module.exports = { cargarArchivo, obtenerEsquema, obtenerFilas, hayDatosCargados };
+/**
+ * Carga un dataset generado programáticamente (sin archivo físico).
+ * Reemplaza cualquier dato previo en memoria.
+ *
+ * @param {Array<{ nombre: string, columnas: Array<{ nombre: string, tipo: string, muestra: string[] }>, filas: Array<Record<string,any>> }>} tablasGeneradas
+ * @param {string} [etiqueta] - Nombre descriptivo para mostrar en la UI (ej: "Ferretería")
+ * @returns {{ tablas: string[] }}
+ */
+function cargarDataset(tablasGeneradas, etiqueta) {
+  tablas.clear();
+  infoArchivo = {
+    ruta:      null,
+    nombre:    etiqueta || 'Dataset generado',
+    extension: '',
+    cargadoEn: new Date().toISOString(),
+  };
+
+  for (const tabla of tablasGeneradas) {
+    tablas.set(tabla.nombre, {
+      columnas:   tabla.columnas,
+      filas:      tabla.filas,
+      totalFilas: tabla.filas.length,
+      origen:     'generado',
+    });
+  }
+
+  return { tablas: [...tablas.keys()] };
+}
+
+module.exports = { cargarArchivo, obtenerEsquema, obtenerFilas, obtenerTodosLosDatos, hayDatosCargados, cargarDataset };

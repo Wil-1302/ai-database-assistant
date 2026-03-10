@@ -1,6 +1,6 @@
 {
   "name": "ai-database-assistant",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "description": "Asistente de escritorio con IA para consultar bases de datos en español",
   "main": "main.js",
   "scripts": {
@@ -14,8 +14,12 @@
   "dependencies": {
     "@faker-js/faker": "^10.3.0",
     "axios": "^1.13.6",
+    "better-sqlite3": "^12.6.2",
     "csv-parser": "^3.2.0",
     "electron": "^40.8.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.3"
   }
 }

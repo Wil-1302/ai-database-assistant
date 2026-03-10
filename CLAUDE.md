@@ -7,10 +7,11 @@ Guía para Claude Code al trabajar con este repositorio.
 Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
 Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Versión actual: v0.3
+## Versión actual: v0.5
 
-Integración con Ollama local para convertir preguntas en español a SQL.
-Muestra el SQL generado y una explicación breve en el panel derecho.
+Generación de datasets desde lenguaje natural: el usuario describe en español el dataset que
+quiere, la IA (Ollama) genera un esquema JSON estructurado, se generan filas falsas con faker
+y el dataset queda disponible para consultas SQL inmediatamente.
 
 ## Comandos
 
@@ -28,26 +29,33 @@ npm install
 ## Estructura de archivos
 
 ```
-main.js          — Proceso principal: ventana, IPC real (carga + esquema + Ollama), diálogo nativo
+main.js          — Proceso principal: ventana, IPC real (carga + esquema + Ollama + SQL + dataset), diálogo nativo
 preload.js       — contextBridge: expone window.api al renderer
-package.json     — Dependencias y scripts (main: "main.js", version: "0.3.0")
+package.json     — Dependencias y scripts (main: "main.js", version: "0.5.0")
 
 src/
+  datasets/
+    interpretador-esquema.js — Interpreta descripción en español → esquema JSON (via Ollama)
+    generador-filas.js       — Genera filas faker a partir del esquema; resuelve relaciones _id
+
+  db/
+    ejecutor-sql.js    — Crea DB SQLite en memoria, inserta datos y ejecuta consultas (v0.4)
+
   ia/
     cliente-ollama.js  — Cliente HTTP nativo para la API local de Ollama (localhost:11434)
     generador-sql.js   — Construye prompt con esquema, llama a Ollama, parsea SQL + explicación
 
   ui/
-    index.html   — Layout 3 paneles (esquema | chat | resultados), v0.3
-    renderer.js  — UI: temas, chat con Ollama, carga de archivos, árbol de esquema, toasts
-    styles.css   — Temas claro/oscuro + árbol de esquema + notificaciones + indicador generando
+    index.html   — Layout 3 paneles (esquema | chat | resultados) + modal generar dataset, v0.5
+    renderer.js  — UI: temas, chat, carga de archivos, árbol de esquema, tabla resultados, modal dataset
+    styles.css   — Temas claro/oscuro + árbol + notificaciones + tabla + modal dataset
 
   importador/
     detector-esquema.js — Infiere tipos de columna (numero, fecha, booleano, texto)
     lector-csv.js       — Lee CSV con detección automática de separador (,  ;  \t)
     lector-excel.js     — Lee todas las hojas de .xlsx / .xls como tablas
-    lector-sqlite.js    — Stub descriptivo (pendiente v0.4)
-    gestor-datos.js     — Singleton en memoria: orquesta carga y expone esquema
+    lector-sqlite.js    — Stub descriptivo (pendiente v0.6)
+    gestor-datos.js     — Singleton en memoria: orquesta carga, expone esquema y datos completos
 ```
 
 ## Arquitectura IPC
@@ -59,10 +67,49 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | `window.api.abrirDialogo()`           | `db:abrir-dialogo`       | ✅ v0.2   |
 | `window.api.cargarArchivo(ruta)`      | `db:cargar-archivo`      | ✅ v0.2   |
 | `window.api.obtenerEsquema()`         | `db:obtener-esquema`     | ✅ v0.2   |
-| `window.api.generarSQL(consulta)`     | `ai:generar-sql`         | ✅ v0.3   |
+| `window.api.generarSQL(consulta)`     | `ai:generar-sql`         | ✅ v0.4   |
 | `window.api.verificarOllama()`        | `ai:verificar-ollama`    | ✅ v0.3   |
-| `window.api.ejecutarConsulta(sql)`    | `db:ejecutar-consulta`   | stub v0.4 |
-| `window.api.generarDatosFalsos(tipo)` | `datos:generar-falsos`   | stub v0.4 |
+| `window.api.ejecutarConsulta(sql)`    | `db:ejecutar-consulta`   | ✅ v0.4   |
+| `window.api.generarDataset(desc)`     | `datos:generar-dataset`  | ✅ v0.5   |
+
+## Módulo Datasets (v0.5)
+
+### interpretador-esquema.js
+- `interpretarEsquema(descripcion, modelo?)` → `{ tablas: [{ nombre, filas, columnas: [{ nombre, tipo }] }] }`
+- Usa Ollama con prompt especializado que exige JSON puro (sin markdown, sin texto extra)
+- Tolerante a respuestas con bloques de código markdown o texto adicional
+- Normaliza identificadores: minúsculas, sin acentos, espacios/guiones → `_`
+- Garantiza columna `id` en cada tabla; valida tipos válidos (texto/numero/fecha/booleano)
+- Rango de filas: 20–100 por tabla
+
+### generador-filas.js
+- `generarTablasDesdeEsquema(esquema)` → array de tablas con columnas+muestra+filas
+- Ordena tablas por dependencias antes de generar (las referenciadas primero)
+- Resuelve `_id` buscando la tabla relacionada por nombre (con/sin plural)
+- Mapea ~50 patrones de nombre de columna a generadores faker específicos
+- Devuelve columnas con campo `muestra` (hasta 3 valores) para el árbol de esquema
+
+### gestor-datos.js (extensión)
+- `cargarDataset(tablasGeneradas, etiqueta)` → carga sin archivo físico; limpia estado previo
+
+## Módulo DB — Ejecución SQL (v0.4)
+
+### ejecutor-sql.js
+- `crearDBDesdeDatos(datos)` → crea una instancia `better-sqlite3` en `:memory:` con todas las tablas del gestor
+- `ejecutarConsulta(db, sql)` → ejecuta un SELECT y devuelve `{ columnas, filas, totalFilas, truncado }`
+- Mapeo de tipos: `numero → REAL`, `booleano → INTEGER`, `fecha/texto → TEXT`
+- Límite de visualización: 500 filas (configurable con `MAX_FILAS_RESULTADO`)
+- Solo acepta sentencias SELECT; otras operaciones lanzan error con mensaje claro
+- Los nombres de tabla/columna se citan con comillas dobles para soportar espacios y tildes
+
+### Flujo completo v0.4 en `ai:generar-sql`
+1. Verificar Ollama disponible
+2. Generar SQL con `generador-sql.js`
+3. Obtener todos los datos del gestor (`obtenerTodosLosDatos()`)
+4. Crear DB en memoria con `crearDBDesdeDatos()`
+5. Ejecutar SQL con `ejecutarConsulta()`
+6. Cerrar DB y devolver `{ ok, sql, explicacion, resultados }`
+7. Si falla la ejecución SQL: devolver `{ ok: true, sql, explicacion, resultados: null, errorSQL }`
 
 ## Módulo IA (v0.3)
 
@@ -94,7 +141,6 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 ## Restricciones clave
 
 - `"type": "commonjs"` — usar `require()`, no `import`
-- `node:sqlite` requerirá Node.js 22.5+ / Electron 36+ (para v0.4+)
 - Context isolation activo: renderer no puede usar APIs de Node directamente
 - Todo texto, mensajes de error y comentarios útiles deben estar en **español**
 - Ollama debe estar instalado y ejecutándose localmente (`ollama serve`)
@@ -106,5 +152,6 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | **v0.1** ✅ | Estructura Electron base, interfaz 3 paneles, toggle tema |
 | **v0.2** ✅ | Diálogo nativo, carga CSV/Excel, detección de esquema, árbol de tablas |
 | **v0.3** ✅ | Integración Ollama: NL → SQL, SQL generado + explicación en panel derecho |
-| v0.4 | Ejecución real de SQL (node:sqlite), datos de prueba con faker |
-| v0.5 | Pulido UX, exportación de resultados, historial de consultas |
+| **v0.4** ✅ | Ejecución SQL con better-sqlite3 en memoria, tabla de resultados en UI |
+| **v0.5** ✅ | Generación de datasets desde lenguaje natural: Ollama + faker + modal UI |
+| v0.6 | Exportación de resultados, historial de consultas, pulido UX |

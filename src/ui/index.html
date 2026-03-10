@@ -34,6 +34,9 @@
         <div class="panel__cabecera">
           <span class="panel__icono">📋</span>
           <h2 class="panel__titulo">Esquema</h2>
+          <button class="btn-generar-dataset" id="btnGenerarDataset" title="Generar dataset con IA desde lenguaje natural">
+            ✨ Generar
+          </button>
         </div>
         <div class="panel__cuerpo">
           <!-- Estado vacío: sin datos cargados -->
@@ -75,14 +78,14 @@
               Escribe tu pregunta en español y el asistente generará el SQL correspondiente para tu base de datos.
             </p>
             <div class="chat-bienvenida__ejemplos">
-              <button class="chat-bienvenida__ejemplo" data-ejemplo="Muéstrame todos los pacientes mayores de 40 años">
-                Muéstrame todos los pacientes mayores de 40 años
+              <button class="chat-bienvenida__ejemplo" data-ejemplo="¿Cuántos registros hay en cada tabla?">
+                ¿Cuántos registros hay en cada tabla?
               </button>
-              <button class="chat-bienvenida__ejemplo" data-ejemplo="¿Cuántas citas hubo en enero de 2024?">
-                ¿Cuántas citas hubo en enero de 2024?
+              <button class="chat-bienvenida__ejemplo" data-ejemplo="Muéstrame los primeros 10 registros de la primera tabla">
+                Muéstrame los primeros 10 registros
               </button>
-              <button class="chat-bienvenida__ejemplo" data-ejemplo="Lista los doctores con más de 10 consultas este mes">
-                Lista los doctores con más de 10 consultas este mes
+              <button class="chat-bienvenida__ejemplo" data-ejemplo="¿Cuáles son las columnas disponibles?">
+                ¿Cuáles son las columnas disponibles?
               </button>
             </div>
           </div>
@@ -138,12 +141,18 @@
               <p class="bloque-explicacion__texto" id="explicacionSQL"></p>
             </div>
 
-            <!-- Tabla de resultados — se llenará en v0.4 cuando se ejecute el SQL -->
+            <!-- Tabla de resultados ejecutados — v0.4 -->
             <div class="tabla-resultados-contenedor oculto" id="resultadosTablaContenedor">
-              <table class="tabla-resultados" id="tablaResultados">
-                <thead id="tablaEncabezados"></thead>
-                <tbody id="tablaCuerpo"></tbody>
-              </table>
+              <div class="bloque-resultados__cabecera">
+                <span class="bloque-resultados__etiqueta">Resultados</span>
+                <span class="bloque-resultados__contador" id="resultadosContador"></span>
+              </div>
+              <div class="tabla-resultados-scroll">
+                <table class="tabla-resultados" id="tablaResultados">
+                  <thead id="tablaEncabezados"></thead>
+                  <tbody id="tablaCuerpo"></tbody>
+                </table>
+              </div>
             </div>
 
           </div>
@@ -152,13 +161,41 @@
 
     </main>
 
+  <!-- Modal: generar dataset con IA -->
+  <div class="modal-overlay oculto" id="modalDataset" role="dialog" aria-modal="true" aria-labelledby="modalDatasetTitulo">
+    <div class="modal-contenido">
+      <h3 class="modal-titulo" id="modalDatasetTitulo">✨ Generar dataset con IA</h3>
+      <p class="modal-descripcion">
+        Describe en español el dataset que quieres crear. La IA generará el esquema y los datos automáticamente.
+      </p>
+      <textarea
+        class="modal-textarea"
+        id="modalDescripcion"
+        rows="3"
+        placeholder="Ej: base de datos de ferretería con productos, clientes, ventas y proveedores"
+        maxlength="300"
+      ></textarea>
+      <div class="modal-ejemplos">
+        <span class="modal-ejemplos__etiqueta">Ejemplos:</span>
+        <button class="modal-ejemplo" data-ejemplo="tienda de ferretería con productos, clientes, ventas y proveedores">Ferretería</button>
+        <button class="modal-ejemplo" data-ejemplo="vuelo de pasajeros con asientos, equipaje, destinos y clases">Vuelo</button>
+        <button class="modal-ejemplo" data-ejemplo="mercado con productos, categorías, clientes y compras">Mercado</button>
+        <button class="modal-ejemplo" data-ejemplo="hospital con pacientes, doctores, citas y medicamentos">Hospital</button>
+      </div>
+      <div class="modal-botones">
+        <button class="modal-btn modal-btn--secundario" id="modalCancelar">Cancelar</button>
+        <button class="modal-btn modal-btn--primario" id="modalConfirmar">Generar dataset</button>
+      </div>
+    </div>
+  </div>
+
     <!-- Barra de estado inferior -->
     <footer class="app-estado">
       <div>
         <span class="estado-punto" id="estadoPunto"></span>
         <span id="estadoTexto">Sin base de datos cargada</span>
       </div>
-      <div>v0.3</div>
+      <div>v0.5</div>
     </footer>
 
   </div>

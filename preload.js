@@ -16,6 +16,6 @@ contextBridge.exposeInMainWorld('api', {
   generarSQL:        (consulta) => ipcRenderer.invoke('ai:generar-sql', consulta),
   verificarOllama:   ()         => ipcRenderer.invoke('ai:verificar-ollama'),
 
-  // Datos de prueba (v0.4)
-  generarDatosFalsos: (tipo) => ipcRenderer.invoke('datos:generar-falsos', tipo),
+  // Generar dataset desde lenguaje natural (v0.5)
+  generarDataset: (descripcion) => ipcRenderer.invoke('datos:generar-dataset', descripcion),
 });

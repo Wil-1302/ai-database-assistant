@@ -183,31 +183,99 @@ async function enviarMensaje() {
   // Mostrar la explicación en el chat
   agregarMensaje(resultado.explicacion, 'ia');
 
-  // Mostrar SQL y explicación en el panel derecho
-  mostrarResultados(resultado.sql, resultado.explicacion);
+  // Si el SQL se generó pero falló al ejecutarse, avisar con un toast
+  if (resultado.errorSQL) {
+    mostrarNotificacion(`Error al ejecutar SQL: ${resultado.errorSQL}`, 'error', 7000);
+  }
+
+  // Mostrar SQL, explicación y tabla de resultados en el panel derecho
+  mostrarResultados(resultado.sql, resultado.explicacion, resultado.resultados || null);
 }
 
 // -----------------------------------------------
 // Panel derecho: SQL generado y explicación
 // -----------------------------------------------
 
-const resultadosVacio    = document.getElementById('resultadosVacio');
-const resultadosContenido = document.getElementById('resultadosContenido');
-const sqlGenerado        = document.getElementById('sqlGenerado');
-const explicacionSQL     = document.getElementById('explicacionSQL');
-const btnCopiarSQL       = document.getElementById('btnCopiarSQL');
+const resultadosVacio             = document.getElementById('resultadosVacio');
+const resultadosContenido         = document.getElementById('resultadosContenido');
+const sqlGenerado                 = document.getElementById('sqlGenerado');
+const explicacionSQL              = document.getElementById('explicacionSQL');
+const btnCopiarSQL                = document.getElementById('btnCopiarSQL');
+const resultadosTablaContenedor   = document.getElementById('resultadosTablaContenedor');
+const tablaEncabezados            = document.getElementById('tablaEncabezados');
+const tablaCuerpo                 = document.getElementById('tablaCuerpo');
+const resultadosContador          = document.getElementById('resultadosContador');
 
 /**
- * Muestra el SQL y la explicación en el panel derecho.
+ * Muestra el SQL, la explicación y (si hay) la tabla de resultados en el panel derecho.
  * @param {string} sql
  * @param {string} explicacion
+ * @param {{ columnas: string[], filas: object[], totalFilas: number, truncado: boolean } | null} resultados
  */
-function mostrarResultados(sql, explicacion) {
-  sqlGenerado.textContent   = sql;
+function mostrarResultados(sql, explicacion, resultados) {
+  sqlGenerado.textContent    = sql;
   explicacionSQL.textContent = explicacion;
+
+  if (resultados && resultados.columnas && resultados.columnas.length > 0) {
+    renderizarTablaResultados(resultados);
+  } else {
+    // Ocultar tabla si no hay resultados ejecutables
+    resultadosTablaContenedor.classList.add('oculto');
+  }
 
   resultadosVacio.classList.add('oculto');
   resultadosContenido.classList.remove('oculto');
+}
+
+/**
+ * Construye dinámicamente la tabla de resultados con las filas devueltas por SQLite.
+ * @param {{ columnas: string[], filas: object[], totalFilas: number, truncado: boolean }} param0
+ */
+function renderizarTablaResultados({ columnas, filas, totalFilas, truncado }) {
+  // --- Encabezados ---
+  tablaEncabezados.innerHTML = '';
+  const trHead = document.createElement('tr');
+  for (const col of columnas) {
+    const th = document.createElement('th');
+    th.textContent = col;
+    trHead.appendChild(th);
+  }
+  tablaEncabezados.appendChild(trHead);
+
+  // --- Cuerpo ---
+  tablaCuerpo.innerHTML = '';
+
+  if (filas.length === 0) {
+    const trVacio = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = columnas.length;
+    td.className = 'tabla-sin-resultados';
+    td.textContent = 'La consulta no devolvió filas.';
+    trVacio.appendChild(td);
+    tablaCuerpo.appendChild(trVacio);
+  } else {
+    for (const fila of filas) {
+      const tr = document.createElement('tr');
+      for (const col of columnas) {
+        const td = document.createElement('td');
+        const val = fila[col];
+        td.textContent = (val === null || val === undefined) ? '—' : String(val);
+        tr.appendChild(td);
+      }
+      tablaCuerpo.appendChild(tr);
+    }
+  }
+
+  // --- Contador de filas ---
+  if (truncado) {
+    resultadosContador.textContent =
+      `${filas.length} de ${totalFilas.toLocaleString('es')} filas (limitado)`;
+  } else {
+    const txt = totalFilas === 1 ? '1 fila' : `${totalFilas.toLocaleString('es')} filas`;
+    resultadosContador.textContent = txt;
+  }
+
+  resultadosTablaContenedor.classList.remove('oculto');
 }
 
 // Botón copiar SQL al portapapeles
@@ -426,3 +494,119 @@ async function iniciarCargaArchivo() {
 // -----------------------------------------------
 
 document.getElementById('btnCargarArchivo').addEventListener('click', iniciarCargaArchivo);
+
+// -----------------------------------------------
+// Generador de dataset con IA — v0.5
+// -----------------------------------------------
+
+const modalDataset      = document.getElementById('modalDataset');
+const modalDescripcion  = document.getElementById('modalDescripcion');
+const modalConfirmar    = document.getElementById('modalConfirmar');
+const modalCancelar     = document.getElementById('modalCancelar');
+
+/** Abre el modal de generación de dataset */
+function abrirModalDataset() {
+  modalDescripcion.value = '';
+  modalConfirmar.disabled = true;
+  modalDataset.classList.remove('oculto');
+  modalDescripcion.focus();
+}
+
+/** Cierra el modal sin generar */
+function cerrarModalDataset() {
+  modalDataset.classList.add('oculto');
+}
+
+// Habilitar/deshabilitar botón Generar según texto
+modalDescripcion.addEventListener('input', () => {
+  modalConfirmar.disabled = modalDescripcion.value.trim().length < 5;
+});
+
+// Cerrar con Escape
+modalDataset.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cerrarModalDataset();
+});
+
+// Cerrar al hacer clic en el overlay (fuera del modal-contenido)
+modalDataset.addEventListener('click', (e) => {
+  if (e.target === modalDataset) cerrarModalDataset();
+});
+
+modalCancelar.addEventListener('click', cerrarModalDataset);
+
+// Ejemplos rápidos del modal
+document.querySelectorAll('.modal-ejemplo').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    modalDescripcion.value = btn.dataset.ejemplo;
+    modalDescripcion.dispatchEvent(new Event('input'));
+    modalDescripcion.focus();
+  });
+});
+
+// Confirmar: iniciar generación
+modalConfirmar.addEventListener('click', async () => {
+  const descripcion = modalDescripcion.value.trim();
+  if (!descripcion || descripcion.length < 5) return;
+
+  cerrarModalDataset();
+  await generarDataset(descripcion);
+});
+
+/**
+ * Flujo completo de generación de dataset desde descripción.
+ * @param {string} descripcion
+ */
+async function generarDataset(descripcion) {
+  // Mostrar en el chat que vamos a generar
+  agregarMensaje(`Generando dataset: "${descripcion}"…`, 'usuario');
+  const indicador = mostrarIndicadorGenerando();
+
+  mostrarEstadoCarga(true);
+  actualizarEstado('Generando dataset con IA…');
+
+  let resultado;
+  try {
+    resultado = await window.api.generarDataset(descripcion);
+  } catch (err) {
+    indicador.remove();
+    mostrarEstadoCarga(false);
+    esquemaVacio.classList.remove('oculto');
+    actualizarEstado('Sin base de datos cargada.');
+    agregarMensaje(`Error inesperado al generar el dataset: ${err.message}`, 'error');
+    return;
+  }
+
+  indicador.remove();
+
+  if (!resultado.ok) {
+    mostrarEstadoCarga(false);
+    esquemaVacio.classList.remove('oculto');
+    actualizarEstado('Sin base de datos cargada.');
+    agregarMensaje(resultado.error, 'error');
+    return;
+  }
+
+  // Renderizar el esquema en el panel izquierdo
+  renderizarEsquema(resultado.esquema);
+
+  const { totalTablas, totalFilas } = resultado;
+  const resumen =
+    `Dataset generado · ${totalTablas} tabla${totalTablas !== 1 ? 's' : ''} · ${totalFilas.toLocaleString('es')} filas`;
+  actualizarEstado(resumen, true);
+
+  mostrarNotificacion(
+    `Dataset listo: ${totalTablas} tabla${totalTablas !== 1 ? 's' : ''}, ${totalFilas.toLocaleString('es')} filas generadas.`,
+    'exito',
+    5000
+  );
+
+  agregarMensaje(
+    `Dataset "${descripcion}" generado correctamente. ` +
+    `Se crearon ${totalTablas} tabla${totalTablas !== 1 ? 's' : ''} con ${totalFilas.toLocaleString('es')} filas en total. ` +
+    'Ahora puedes hacer preguntas en español sobre estos datos.',
+    'ia'
+  );
+}
+
+// Botón "✨ Generar" en la cabecera del panel izquierdo
+document.getElementById('btnGenerarDataset').addEventListener('click', abrirModalDataset);
