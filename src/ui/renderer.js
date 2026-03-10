@@ -1,7 +1,7 @@
 'use strict';
 
 // =============================================
-// Asistente IA de Bases de Datos — v0.2
+// Asistente IA de Bases de Datos — v0.3
 // Lógica del proceso renderer
 // =============================================
 
@@ -76,17 +76,23 @@ document.querySelectorAll('.chat-bienvenida__ejemplo').forEach((btn) => {
 // Chat: mensajes
 // -----------------------------------------------
 
-const chatMensajes  = document.getElementById('chatMensajes');
+const chatMensajes   = document.getElementById('chatMensajes');
 const chatBienvenida = document.getElementById('chatBienvenida');
 
+/**
+ * Agrega un mensaje al chat.
+ * @param {string} texto - Contenido del mensaje
+ * @param {'usuario'|'ia'|'error'} tipo - Tipo de mensaje
+ * @returns {HTMLElement} El elemento creado (útil para eliminarlo después)
+ */
 function agregarMensaje(texto, tipo) {
   if (!chatBienvenida.classList.contains('oculto')) {
     chatBienvenida.classList.add('oculto');
   }
 
-  const avatarIcono = tipo === 'usuario' ? '👤' : '🤖';
+  const avatarIcono = tipo === 'usuario' ? '👤' : tipo === 'error' ? '⚠️' : '🤖';
   const div = document.createElement('div');
-  div.classList.add('mensaje', `mensaje--${tipo}`);
+  div.classList.add('mensaje', `mensaje--${tipo === 'error' ? 'ia mensaje--error' : tipo}`);
   div.innerHTML = `
     <div class="mensaje__avatar">${avatarIcono}</div>
     <div class="mensaje__burbuja">${escaparHTML(texto)}</div>
@@ -94,6 +100,33 @@ function agregarMensaje(texto, tipo) {
 
   chatMensajes.appendChild(div);
   chatMensajes.scrollTop = chatMensajes.scrollHeight;
+  return div;
+}
+
+/**
+ * Muestra un indicador de "generando..." en el chat.
+ * @returns {HTMLElement} El elemento del indicador (para eliminarlo al terminar)
+ */
+function mostrarIndicadorGenerando() {
+  if (!chatBienvenida.classList.contains('oculto')) {
+    chatBienvenida.classList.add('oculto');
+  }
+
+  const div = document.createElement('div');
+  div.classList.add('mensaje', 'mensaje--ia');
+  div.id = 'mensajeGenerando';
+  div.innerHTML = `
+    <div class="mensaje__avatar">🤖</div>
+    <div class="mensaje__burbuja mensaje__burbuja--generando">
+      <span class="generando-punto"></span>
+      <span class="generando-punto"></span>
+      <span class="generando-punto"></span>
+    </div>
+  `;
+
+  chatMensajes.appendChild(div);
+  chatMensajes.scrollTop = chatMensajes.scrollHeight;
+  return div;
 }
 
 function escaparHTML(texto) {
@@ -102,22 +135,95 @@ function escaparHTML(texto) {
   return div.innerHTML;
 }
 
+// -----------------------------------------------
+// Chat: lógica de envío con Ollama
+// -----------------------------------------------
+
+/** Indica si hay una generación en curso (evita envíos simultáneos) */
+let generandoSQL = false;
+
 async function enviarMensaje() {
   const consulta = chatEntrada.value.trim();
-  if (!consulta) return;
+  if (!consulta || generandoSQL) return;
 
   agregarMensaje(consulta, 'usuario');
   chatEntrada.value = '';
   chatEntrada.style.height = 'auto';
   btnEnviar.disabled = true;
+  generandoSQL = true;
 
-  // La generación SQL estará disponible en v0.3
-  agregarMensaje(
-    'La integración con IA para generar SQL estará disponible en la versión v0.3. ' +
-    'Por ahora puedes cargar un archivo y explorar su estructura en el panel izquierdo.',
-    'ia'
-  );
+  // Mostrar indicador de escritura
+  const indicador = mostrarIndicadorGenerando();
+
+  let resultado;
+  try {
+    resultado = await window.api.generarSQL(consulta);
+  } catch (err) {
+    indicador.remove();
+    generandoSQL = false;
+    btnEnviar.disabled = chatEntrada.value.trim() === '';
+    agregarMensaje(
+      `Error inesperado al contactar con el proceso principal: ${err.message}`,
+      'error'
+    );
+    return;
+  }
+
+  // Quitar indicador de escritura
+  indicador.remove();
+  generandoSQL = false;
+  btnEnviar.disabled = chatEntrada.value.trim() === '';
+
+  if (!resultado.ok) {
+    // Error devuelto desde el proceso principal (Ollama no disponible, etc.)
+    agregarMensaje(resultado.error, 'error');
+    return;
+  }
+
+  // Mostrar la explicación en el chat
+  agregarMensaje(resultado.explicacion, 'ia');
+
+  // Mostrar SQL y explicación en el panel derecho
+  mostrarResultados(resultado.sql, resultado.explicacion);
 }
+
+// -----------------------------------------------
+// Panel derecho: SQL generado y explicación
+// -----------------------------------------------
+
+const resultadosVacio    = document.getElementById('resultadosVacio');
+const resultadosContenido = document.getElementById('resultadosContenido');
+const sqlGenerado        = document.getElementById('sqlGenerado');
+const explicacionSQL     = document.getElementById('explicacionSQL');
+const btnCopiarSQL       = document.getElementById('btnCopiarSQL');
+
+/**
+ * Muestra el SQL y la explicación en el panel derecho.
+ * @param {string} sql
+ * @param {string} explicacion
+ */
+function mostrarResultados(sql, explicacion) {
+  sqlGenerado.textContent   = sql;
+  explicacionSQL.textContent = explicacion;
+
+  resultadosVacio.classList.add('oculto');
+  resultadosContenido.classList.remove('oculto');
+}
+
+// Botón copiar SQL al portapapeles
+btnCopiarSQL.addEventListener('click', () => {
+  const sql = sqlGenerado.textContent;
+  if (!sql) return;
+
+  navigator.clipboard.writeText(sql).then(() => {
+    btnCopiarSQL.textContent = 'Copiado ✓';
+    setTimeout(() => {
+      btnCopiarSQL.textContent = 'Copiar';
+    }, 2000);
+  }).catch(() => {
+    mostrarNotificacion('No se pudo copiar al portapapeles.', 'error');
+  });
+});
 
 // -----------------------------------------------
 // Notificaciones (toast)
@@ -296,7 +402,7 @@ async function iniciarCargaArchivo() {
 
   renderizarEsquema(esquema);
 
-  const totalTablas  = esquema.tablas.length;
+  const totalTablas   = esquema.tablas.length;
   const totalColumnas = esquema.tablas.reduce((s, t) => s + t.columnas.length, 0);
   const resumen = `${resultado.archivoNombre} · ${totalTablas} tabla${totalTablas !== 1 ? 's' : ''} · ${totalColumnas} columna${totalColumnas !== 1 ? 's' : ''}`;
   actualizarEstado(resumen, true);
@@ -310,7 +416,7 @@ async function iniciarCargaArchivo() {
   agregarMensaje(
     `Archivo "${resultado.archivoNombre}" cargado correctamente. ` +
     `Se detectaron ${totalTablas} tabla${totalTablas !== 1 ? 's' : ''} con ${totalColumnas} columna${totalColumnas !== 1 ? 's' : ''} en total. ` +
-    'Explora la estructura en el panel izquierdo.',
+    'Ahora puedes hacerme preguntas en español y generaré el SQL correspondiente.',
     'ia'
   );
 }

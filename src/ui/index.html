@@ -114,22 +114,38 @@
           <div class="resultados-vacio" id="resultadosVacio">
             <span class="resultados-vacio__icono">📊</span>
             <p class="resultados-vacio__texto">
-              El SQL generado y los resultados de tus consultas aparecerán aquí.
+              El SQL generado y la explicación de tus consultas aparecerán aquí.
             </p>
           </div>
 
-          <!-- Contenido de resultados (oculto hasta tener datos) -->
-          <div id="resultadosContenido" class="oculto" style="display: flex; flex-direction: column; height: 100%;">
+          <!-- Contenido generado (oculto hasta recibir respuesta de Ollama) -->
+          <div id="resultadosContenido" class="oculto">
+
+            <!-- Bloque SQL generado con botón para copiar -->
             <div class="bloque-sql">
-              <div class="bloque-sql__etiqueta">SQL generado</div>
+              <div class="bloque-sql__cabecera">
+                <span class="bloque-sql__etiqueta">SQL generado</span>
+                <button class="bloque-sql__btn-copiar" id="btnCopiarSQL" title="Copiar SQL al portapapeles">
+                  Copiar
+                </button>
+              </div>
               <pre class="bloque-sql__codigo" id="sqlGenerado"></pre>
             </div>
-            <div class="tabla-resultados-contenedor">
+
+            <!-- Explicación en español de la consulta -->
+            <div class="bloque-explicacion">
+              <div class="bloque-explicacion__etiqueta">Explicación</div>
+              <p class="bloque-explicacion__texto" id="explicacionSQL"></p>
+            </div>
+
+            <!-- Tabla de resultados — se llenará en v0.4 cuando se ejecute el SQL -->
+            <div class="tabla-resultados-contenedor oculto" id="resultadosTablaContenedor">
               <table class="tabla-resultados" id="tablaResultados">
                 <thead id="tablaEncabezados"></thead>
                 <tbody id="tablaCuerpo"></tbody>
               </table>
             </div>
+
           </div>
         </div>
       </section>
@@ -142,7 +158,7 @@
         <span class="estado-punto" id="estadoPunto"></span>
         <span id="estadoTexto">Sin base de datos cargada</span>
       </div>
-      <div>v0.2</div>
+      <div>v0.3</div>
     </footer>
 
   </div>
