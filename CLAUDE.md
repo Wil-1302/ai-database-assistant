@@ -1,80 +1,74 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guía para Claude Code al trabajar con este repositorio.
 
-## Project Overview
+## Descripción del proyecto
 
-Desktop AI database assistant built with Electron + Node.js. All interface text, comments, and user-facing messages **must be in Spanish**.
+Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
+Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Commands
+## Versión actual: v0.1
+
+Estructura base funcional con interfaz de 3 paneles y sistema de temas.
+
+## Comandos
 
 ```bash
-# Iniciar la aplicación en modo desarrollo
+# Iniciar la aplicación
 npm start
 
-# Ejecutar Electron directamente
-npx electron .
+# Modo desarrollo (con inspector de Node)
+npm run dev
 
 # Instalar dependencias
 npm install
 ```
 
-## Architecture
-
-### Entry Points
-- `main.js` — Electron main process (Node.js), handles window creation and IPC
-- `src/ui/index.html` — Renderer process entry point
-- `src/ui/renderer.js` — Frontend logic (runs in browser context)
-
-### Module Structure
+## Archivos existentes
 
 ```
-/src
-  /ai
-    ollama.js       — Ollama API client (POST http://localhost:11434/api/generate)
-    sqlGenerator.js — Converts Spanish natural language → SQL via AI
-  /database
-    loader.js       — Loads CSV (csv-parser), Excel (xlsx), SQLite (node:sqlite)
-    schema.js       — Auto-detects tables, columns, types from loaded data
-    executor.js     — Executes SQL queries via node:sqlite
-  /ui
-    index.html      — Main window layout (3-panel: schema | chat | results)
-    renderer.js     — IPC calls to main process, UI event handling
-    styles.css      — Theming (light/dark mode via CSS variables)
-  /components
-    schemaPanel.js  — Left panel: tree view of tables/columns
-    chatPanel.js    — Center panel: Spanish NL chat interface
-    resultsPanel.js — Right panel: generated SQL + results table
-  /utils
-    fakeData.js     — @faker-js/faker datasets (hospital, pacientes, doctores, citas, embarazos)
+main.js          — Proceso principal de Electron (ventana + handlers IPC stub)
+preload.js       — Puente contextBridge: expone window.api al renderer
+package.json     — Dependencias y scripts (main: "main.js", version: "0.1.0")
+
+src/
+  ui/
+    index.html   — Layout principal: 3 paneles (esquema | chat | resultados)
+    renderer.js  — Lógica UI: toggle de tema, chat básico, textarea auto-expand
+    styles.css   — Sistema de temas claro/oscuro con variables CSS
 ```
 
-### IPC Architecture (Electron)
-The renderer communicates with main process via `ipcRenderer.invoke()` / `ipcMain.handle()`:
-- `db:load-file` — Load CSV/Excel/SQLite file
-- `db:get-schema` — Get detected schema
-- `db:execute-query` — Run SQL query
-- `ai:generate-sql` — Send NL query to Ollama, receive SQL + explanation
-- `data:generate-fake` — Generate faker dataset by type
+## Arquitectura IPC
 
-### AI Integration
-- Ollama runs locally at `http://localhost:11434`
-- Supported models: `deepseek-coder`, `llama3`
-- Prompt must include schema context so AI generates correct SQL
-- Response must include: SQL generado, explicación del SQL, explicación de JOINs
+El renderer se comunica con el proceso principal via `window.api` (contextBridge):
 
-### Database Handling
-- All data (CSV, Excel, fake data) is loaded into an **in-memory SQLite** database using `node:sqlite` (Node.js built-in, available in Node 22.5+)
-- SQLite file databases are loaded directly
-- Schema detection reads table names, column names, and inferred types
+| Método en renderer       | Canal IPC              | Estado en v0.1 |
+|--------------------------|------------------------|----------------|
+| `window.api.cargarArchivo(ruta)` | `db:cargar-archivo`  | stub (TODO v0.2) |
+| `window.api.obtenerEsquema()`    | `db:obtener-esquema` | stub (TODO v0.2) |
+| `window.api.ejecutarConsulta(sql)` | `db:ejecutar-consulta` | stub (TODO v0.2) |
+| `window.api.generarSQL(consulta)` | `ai:generar-sql`    | stub (TODO v0.2) |
+| `window.api.generarDatosFalsos(tipo)` | `datos:generar-falsos` | stub (TODO v0.2) |
 
-### Theme System
-- CSS custom properties (variables) for colors
-- Toggle between `data-theme="light"` and `data-theme="dark"` on `<body>`
-- Persisted in `localStorage`
+## Sistema de temas
 
-## Key Constraints
-- `"type": "commonjs"` — use `require()`, not `import`
-- `node:sqlite` requires Node.js 22.5+ (Electron 36+ bundles a compatible version)
-- Electron context isolation: renderer cannot use Node.js APIs directly — all Node/DB/AI calls go through IPC preload bridge
-- All UI text, error messages, comments, and logs must be in **Spanish**
+- Variables CSS en `:root` / `[data-tema="claro"]` y `[data-tema="oscuro"]`
+- Toggle via botón en cabecera → atributo `data-tema` en `<html>`
+- Persiste en `localStorage` con clave `asistente-tema`
+
+## Restricciones clave
+
+- `"type": "commonjs"` — usar `require()`, no `import`
+- `node:sqlite` requerirá Node.js 22.5+ / Electron 36+ (para v0.2+)
+- Context isolation activo: renderer no puede usar APIs de Node directamente
+- Todo texto, mensajes de error y comentarios útiles deben estar en **español**
+
+## Hoja de ruta por versiones
+
+| Versión | Objetivo |
+|---------|----------|
+| **v0.1** ✅ | Estructura Electron base, interfaz 3 paneles, toggle tema |
+| v0.2 | Carga de archivos CSV/Excel/SQLite, detección de esquema, árbol de tablas |
+| v0.3 | Integración Ollama: NL → SQL, mostrar explicación |
+| v0.4 | Datos de prueba con faker (hospital, pacientes, doctores) |
+| v0.5 | Pulido UX, exportación de resultados, historial de consultas |

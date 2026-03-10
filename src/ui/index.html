@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="claro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>Asistente IA de Bases de Datos</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div class="app-contenedor">
+
+    <!-- Cabecera principal -->
+    <header class="app-cabecera">
+      <div class="app-cabecera__titulo">
+        <span class="app-cabecera__titulo-icono">🗄️</span>
+        Asistente IA de Bases de Datos
+      </div>
+      <div class="app-cabecera__controles">
+        <button class="btn-tema" id="btnTema" title="Cambiar tema">
+          <span class="btn-tema__icono" id="iconoTema">🌙</span>
+          <span id="textoTema">Tema oscuro</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Zona de tres paneles -->
+    <main class="app-paneles">
+
+      <!-- Panel izquierdo: Esquema de base de datos -->
+      <section class="panel panel-esquema" aria-label="Esquema de base de datos">
+        <div class="panel__cabecera">
+          <span class="panel__icono">📋</span>
+          <h2 class="panel__titulo">Esquema</h2>
+        </div>
+        <div class="panel__cuerpo">
+          <div class="esquema-vacio" id="esquemaVacio">
+            <span class="esquema-vacio__icono">📂</span>
+            <p class="esquema-vacio__texto">
+              Carga un archivo CSV, Excel o SQLite para ver las tablas y columnas disponibles.
+            </p>
+            <button class="btn-cargar" id="btnCargarArchivo">
+              Cargar archivo
+            </button>
+          </div>
+          <!-- El árbol de esquema se inyectará aquí dinámicamente en v0.2 -->
+          <div id="arbolEsquema" class="oculto"></div>
+        </div>
+      </section>
+
+      <!-- Panel central: Chat con IA -->
+      <section class="panel panel-chat" aria-label="Chat con inteligencia artificial">
+        <div class="panel__cabecera">
+          <span class="panel__icono">💬</span>
+          <h2 class="panel__titulo">Chat IA</h2>
+        </div>
+
+        <!-- Área de mensajes -->
+        <div class="chat-mensajes" id="chatMensajes">
+          <!-- Pantalla de bienvenida -->
+          <div class="chat-bienvenida" id="chatBienvenida">
+            <span class="chat-bienvenida__icono">🤖</span>
+            <h3 class="chat-bienvenida__titulo">¿Qué quieres consultar?</h3>
+            <p class="chat-bienvenida__subtitulo">
+              Escribe tu pregunta en español y el asistente generará el SQL correspondiente para tu base de datos.
+            </p>
+            <div class="chat-bienvenida__ejemplos">
+              <button class="chat-bienvenida__ejemplo" data-ejemplo="Muéstrame todos los pacientes mayores de 40 años">
+                Muéstrame todos los pacientes mayores de 40 años
+              </button>
+              <button class="chat-bienvenida__ejemplo" data-ejemplo="¿Cuántas citas hubo en enero de 2024?">
+                ¿Cuántas citas hubo en enero de 2024?
+              </button>
+              <button class="chat-bienvenida__ejemplo" data-ejemplo="Lista los doctores con más de 10 consultas este mes">
+                Lista los doctores con más de 10 consultas este mes
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Entrada de texto -->
+        <div class="chat-entrada">
+          <textarea
+            class="chat-entrada__campo"
+            id="chatEntrada"
+            placeholder="Escribe tu consulta en español..."
+            rows="1"
+            aria-label="Consulta en lenguaje natural"
+          ></textarea>
+          <button class="chat-entrada__btn-enviar" id="btnEnviar" disabled>
+            Enviar
+          </button>
+        </div>
+      </section>
+
+      <!-- Panel derecho: SQL generado y resultados -->
+      <section class="panel panel-resultados" aria-label="SQL generado y resultados">
+        <div class="panel__cabecera">
+          <span class="panel__icono">⚡</span>
+          <h2 class="panel__titulo">SQL y Resultados</h2>
+        </div>
+        <div class="panel__cuerpo">
+          <!-- Estado vacío -->
+          <div class="resultados-vacio" id="resultadosVacio">
+            <span class="resultados-vacio__icono">📊</span>
+            <p class="resultados-vacio__texto">
+              El SQL generado y los resultados de tus consultas aparecerán aquí.
+            </p>
+          </div>
+
+          <!-- Contenido de resultados (oculto hasta tener datos) -->
+          <div id="resultadosContenido" class="oculto" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="bloque-sql">
+              <div class="bloque-sql__etiqueta">SQL generado</div>
+              <pre class="bloque-sql__codigo" id="sqlGenerado"></pre>
+            </div>
+            <div class="tabla-resultados-contenedor">
+              <table class="tabla-resultados" id="tablaResultados">
+                <thead id="tablaEncabezados"></thead>
+                <tbody id="tablaCuerpo"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Barra de estado inferior -->
+    <footer class="app-estado">
+      <div>
+        <span class="estado-punto" id="estadoPunto"></span>
+        <span id="estadoTexto">Sin base de datos cargada</span>
+      </div>
+      <div>v0.1</div>
+    </footer>
+
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
