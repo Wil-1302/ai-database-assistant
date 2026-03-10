@@ -1,7 +1,8 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const gestor = require('./src/importador/gestor-datos');
 
 // Referencia global para evitar que la ventana sea eliminada por el GC
 let ventanaPrincipal = null;
@@ -27,40 +28,65 @@ function crearVentana() {
   });
 }
 
-// --- Manejadores IPC (stubs para v0.1, se implementarán en versiones siguientes) ---
+// --- Manejadores IPC ---
 
-// Cargar archivo de base de datos (CSV, Excel, SQLite)
+// Abrir diálogo nativo de selección de archivo
+ipcMain.handle('db:abrir-dialogo', async () => {
+  if (!ventanaPrincipal) return { cancelado: true };
+
+  const resultado = await dialog.showOpenDialog(ventanaPrincipal, {
+    title: 'Seleccionar archivo de datos',
+    buttonLabel: 'Cargar',
+    filters: [
+      { name: 'Archivos de datos', extensions: ['csv', 'xlsx', 'xls', 'sqlite', 'db', 'sqlite3'] },
+      { name: 'CSV',               extensions: ['csv'] },
+      { name: 'Excel',             extensions: ['xlsx', 'xls'] },
+      { name: 'SQLite',            extensions: ['sqlite', 'db', 'sqlite3'] },
+      { name: 'Todos los archivos', extensions: ['*'] },
+    ],
+    properties: ['openFile'],
+  });
+
+  if (resultado.canceled || resultado.filePaths.length === 0) {
+    return { cancelado: true };
+  }
+
+  return { cancelado: false, ruta: resultado.filePaths[0] };
+});
+
+// Cargar archivo de datos en memoria y devolver resumen
 ipcMain.handle('db:cargar-archivo', async (_evento, rutaArchivo) => {
-  // TODO v0.2: implementar carga real con csv-parser / xlsx / node:sqlite
-  console.log('[IPC] db:cargar-archivo →', rutaArchivo);
-  return { ok: false, error: 'No implementado en v0.1' };
+  try {
+    console.log('[IPC] db:cargar-archivo →', rutaArchivo);
+    const info = await gestor.cargarArchivo(rutaArchivo);
+    return { ok: true, ...info };
+  } catch (err) {
+    console.error('[IPC] db:cargar-archivo — error:', err.message);
+    return { ok: false, error: err.message };
+  }
 });
 
-// Obtener esquema detectado de la base de datos cargada
+// Devolver el esquema de las tablas cargadas
 ipcMain.handle('db:obtener-esquema', async () => {
-  // TODO v0.2: devolver tablas y columnas reales
-  return { tablas: [] };
+  return gestor.obtenerEsquema();
 });
 
-// Ejecutar consulta SQL sobre la base de datos en memoria
+// Ejecutar consulta SQL — pendiente en v0.3
 ipcMain.handle('db:ejecutar-consulta', async (_evento, sql) => {
-  // TODO v0.2: ejecutar con node:sqlite
   console.log('[IPC] db:ejecutar-consulta →', sql);
-  return { ok: false, error: 'No implementado en v0.1' };
+  return { ok: false, error: 'La ejecución de consultas SQL estará disponible en la versión v0.3.' };
 });
 
-// Generar SQL desde lenguaje natural usando Ollama
+// Generar SQL desde lenguaje natural — pendiente en v0.3
 ipcMain.handle('ai:generar-sql', async (_evento, consulta) => {
-  // TODO v0.2: conectar con Ollama en localhost:11434
   console.log('[IPC] ai:generar-sql →', consulta);
-  return { ok: false, error: 'No implementado en v0.1' };
+  return { ok: false, error: 'La integración con Ollama estará disponible en la versión v0.3.' };
 });
 
-// Generar datos de prueba con faker
+// Generar datos de prueba con faker — pendiente en v0.4
 ipcMain.handle('datos:generar-falsos', async (_evento, tipo) => {
-  // TODO v0.2: usar @faker-js/faker para datasets de hospital
   console.log('[IPC] datos:generar-falsos →', tipo);
-  return { ok: false, error: 'No implementado en v0.1' };
+  return { ok: false, error: 'La generación de datos de prueba estará disponible en la versión v0.4.' };
 });
 
 // --- Ciclo de vida de la app ---
