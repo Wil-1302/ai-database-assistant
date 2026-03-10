@@ -2,7 +2,9 @@
 
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
-const gestor = require('./src/importador/gestor-datos');
+const gestor    = require('./src/importador/gestor-datos');
+const generador = require('./src/ia/generador-sql');
+const { verificarDisponibilidad } = require('./src/ia/cliente-ollama');
 
 // Referencia global para evitar que la ventana sea eliminada por el GC
 let ventanaPrincipal = null;
@@ -77,10 +79,38 @@ ipcMain.handle('db:ejecutar-consulta', async (_evento, sql) => {
   return { ok: false, error: 'La ejecución de consultas SQL estará disponible en la versión v0.3.' };
 });
 
-// Generar SQL desde lenguaje natural — pendiente en v0.3
+// Verificar disponibilidad de Ollama
+ipcMain.handle('ai:verificar-ollama', async () => {
+  const disponible = await verificarDisponibilidad();
+  return { disponible };
+});
+
+// Generar SQL desde lenguaje natural usando Ollama — v0.3
 ipcMain.handle('ai:generar-sql', async (_evento, consulta) => {
   console.log('[IPC] ai:generar-sql →', consulta);
-  return { ok: false, error: 'La integración con Ollama estará disponible en la versión v0.3.' };
+
+  // Verificar que Ollama esté disponible antes de intentar la generación
+  const disponible = await verificarDisponibilidad();
+  if (!disponible) {
+    return {
+      ok: false,
+      error:
+        'No se pudo conectar con Ollama. ' +
+        'Asegúrate de que Ollama esté en ejecución (ollama serve) ' +
+        'y de que tengas al menos un modelo descargado.',
+    };
+  }
+
+  // Obtener el esquema actual para usarlo como contexto
+  const esquema = gestor.obtenerEsquema();
+
+  try {
+    const { sql, explicacion } = await generador.generarSQL(consulta, esquema);
+    return { ok: true, sql, explicacion };
+  } catch (err) {
+    console.error('[IPC] ai:generar-sql — error:', err.message);
+    return { ok: false, error: err.message };
+  }
 });
 
 // Generar datos de prueba con faker — pendiente en v0.4

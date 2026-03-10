@@ -13,7 +13,8 @@ contextBridge.exposeInMainWorld('api', {
   ejecutarConsulta: (sql) => ipcRenderer.invoke('db:ejecutar-consulta', sql),
 
   // Inteligencia artificial (v0.3)
-  generarSQL: (consulta) => ipcRenderer.invoke('ai:generar-sql', consulta),
+  generarSQL:        (consulta) => ipcRenderer.invoke('ai:generar-sql', consulta),
+  verificarOllama:   ()         => ipcRenderer.invoke('ai:verificar-ollama'),
 
   // Datos de prueba (v0.4)
   generarDatosFalsos: (tipo) => ipcRenderer.invoke('datos:generar-falsos', tipo),
