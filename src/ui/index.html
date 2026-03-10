@@ -36,16 +36,24 @@
           <h2 class="panel__titulo">Esquema</h2>
         </div>
         <div class="panel__cuerpo">
+          <!-- Estado vacío: sin datos cargados -->
           <div class="esquema-vacio" id="esquemaVacio">
             <span class="esquema-vacio__icono">📂</span>
             <p class="esquema-vacio__texto">
-              Carga un archivo CSV, Excel o SQLite para ver las tablas y columnas disponibles.
+              Carga un archivo CSV o Excel para ver las tablas y columnas detectadas.
             </p>
             <button class="btn-cargar" id="btnCargarArchivo">
               Cargar archivo
             </button>
           </div>
-          <!-- El árbol de esquema se inyectará aquí dinámicamente en v0.2 -->
+
+          <!-- Estado de carga en progreso -->
+          <div class="estado-cargando oculto" id="esquemaCargando">
+            <div class="estado-cargando__spinner"></div>
+            <p class="estado-cargando__texto">Procesando archivo…</p>
+          </div>
+
+          <!-- Árbol de esquema detectado (se rellena dinámicamente) -->
           <div id="arbolEsquema" class="oculto"></div>
         </div>
       </section>
@@ -134,7 +142,7 @@
         <span class="estado-punto" id="estadoPunto"></span>
         <span id="estadoTexto">Sin base de datos cargada</span>
       </div>
-      <div>v0.1</div>
+      <div>v0.2</div>
     </footer>
 
   </div>
