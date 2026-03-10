@@ -156,6 +156,24 @@
             </div>
 
           </div>
+
+          <!-- Vista previa de tabla seleccionada — v0.5.1 (oculto hasta seleccionar tabla) -->
+          <div id="vistaPrevia" class="oculto">
+            <div class="vista-previa-cabecera">
+              <span class="vista-previa-cabecera__icono">👁</span>
+              <span class="vista-previa-cabecera__titulo">Vista previa:</span>
+              <strong class="vista-previa-cabecera__nombre" id="vistaPreviaNombre"></strong>
+              <span class="vista-previa-cabecera__contador" id="vistaPreviewContador"></span>
+              <button class="vista-previa-cabecera__cerrar" id="btnCerrarVistaPrevia" title="Cerrar vista previa">✕</button>
+            </div>
+            <div class="tabla-resultados-scroll">
+              <table class="tabla-resultados" id="tablaVistaPrevia">
+                <thead id="vistaPreviewEncabezados"></thead>
+                <tbody id="vistaPreviewCuerpo"></tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -182,6 +200,14 @@
         <button class="modal-ejemplo" data-ejemplo="mercado con productos, categorías, clientes y compras">Mercado</button>
         <button class="modal-ejemplo" data-ejemplo="hospital con pacientes, doctores, citas y medicamentos">Hospital</button>
       </div>
+      <div class="modal-opciones">
+        <label class="modal-opciones__label" for="modalFilasPorTabla">Filas por tabla:</label>
+        <select class="modal-opciones__select" id="modalFilasPorTabla">
+          <option value="20">20 filas</option>
+          <option value="50" selected>50 filas</option>
+          <option value="100">100 filas</option>
+        </select>
+      </div>
       <div class="modal-botones">
         <button class="modal-btn modal-btn--secundario" id="modalCancelar">Cancelar</button>
         <button class="modal-btn modal-btn--primario" id="modalConfirmar">Generar dataset</button>
@@ -195,7 +221,7 @@
         <span class="estado-punto" id="estadoPunto"></span>
         <span id="estadoTexto">Sin base de datos cargada</span>
       </div>
-      <div>v0.5</div>
+      <div>v0.5.1</div>
     </footer>
 
   </div>

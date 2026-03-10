@@ -904,6 +904,146 @@ html, body {
   display: none !important;
 }
 
+/* ─── Resumen del dataset (debajo de la cabecera del árbol) ─── */
+.esquema-resumen {
+  font-size: 11px;
+  color: var(--color-texto-suave);
+  padding: 4px 12px 6px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+/* ─── Nombre del archivo en cabecera del árbol ─── */
+.esquema-archivo__nombre {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+/* ─── Botón Regenerar ─── */
+.btn-regenerar {
+  padding: 2px 6px;
+  background: transparent;
+  color: var(--color-texto-suave);
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-regenerar:hover {
+  color: var(--color-acento);
+  border-color: var(--color-acento);
+}
+
+/* ─── Botón 👁 Ver datos en tabla del árbol ─── */
+.btn-ver-datos {
+  background: transparent;
+  border: none;
+  padding: 1px 4px;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.esquema-tabla__cabecera:hover .btn-ver-datos,
+.btn-ver-datos:focus {
+  opacity: 1;
+}
+
+/* ─── Vista previa de tabla (panel derecho) ─── */
+.vista-previa-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-borde);
+  background: var(--color-fondo);
+  flex-shrink: 0;
+}
+
+.vista-previa-cabecera__icono {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.vista-previa-cabecera__titulo {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+}
+
+.vista-previa-cabecera__nombre {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.vista-previa-cabecera__contador {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-texto-suave);
+}
+
+.vista-previa-cabecera__cerrar {
+  background: transparent;
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--color-texto-suave);
+  transition: color 0.1s ease, border-color 0.1s ease;
+  flex-shrink: 0;
+}
+
+.vista-previa-cabecera__cerrar:hover {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+#vistaPrevia {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+#vistaPrevia .tabla-resultados-scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+/* ─── Opciones del modal (selector de filas) ─── */
+.modal-opciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.modal-opciones__label {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  font-weight: 600;
+}
+
+.modal-opciones__select {
+  padding: 4px 8px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-size: 12px;
+  cursor: pointer;
+}
+
 /* ─── Botón "✨ Generar" en cabecera del panel izquierdo ─── */
 .btn-generar-dataset {
   margin-left: auto;

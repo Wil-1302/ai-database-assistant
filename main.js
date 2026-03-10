@@ -214,9 +214,43 @@ ipcMain.handle('ai:generar-sql', async (_evento, consulta) => {
   }
 });
 
+// Obtener vista previa de una tabla cargada (primeras N filas) — v0.5.1
+ipcMain.handle('datos:obtener-vista-tabla', async (_evento, nombreTabla) => {
+  console.log('[IPC] datos:obtener-vista-tabla →', nombreTabla);
+
+  if (!gestor.hayDatosCargados()) {
+    return { ok: false, error: 'No hay datos cargados.' };
+  }
+
+  const datos = gestor.obtenerFilas(nombreTabla);
+  if (!datos) {
+    return { ok: false, error: `Tabla "${nombreTabla}" no encontrada.` };
+  }
+
+  const LIMITE = 20;
+  const todasLasFilas = datos.filas;
+
+  // Obtener columnas del esquema para preservar el orden original
+  const esquema = gestor.obtenerEsquema();
+  const infoTabla = esquema.tablas.find((t) => t.nombre === nombreTabla);
+  const columnas = infoTabla
+    ? infoTabla.columnas.map((c) => c.nombre)
+    : Object.keys(todasLasFilas[0] || {});
+
+  return {
+    ok:         true,
+    nombre:     nombreTabla,
+    columnas,
+    filas:      todasLasFilas.slice(0, LIMITE),
+    totalFilas: todasLasFilas.length,
+    truncado:   todasLasFilas.length > LIMITE,
+  };
+});
+
 // Generar dataset desde descripción en lenguaje natural — v0.5
-ipcMain.handle('datos:generar-dataset', async (_evento, descripcion) => {
-  console.log('[IPC] datos:generar-dataset →', descripcion);
+// v0.5.1: acepta filasPorTabla como segundo argumento para sobreescribir el número de filas
+ipcMain.handle('datos:generar-dataset', async (_evento, descripcion, filasPorTabla) => {
+  console.log('[IPC] datos:generar-dataset →', descripcion, '| filas:', filasPorTabla);
 
   if (!descripcion || typeof descripcion !== 'string' || descripcion.trim().length < 5) {
     return { ok: false, error: 'Escribe una descripción más detallada del dataset que quieres generar.' };
@@ -243,6 +277,15 @@ ipcMain.handle('datos:generar-dataset', async (_evento, descripcion) => {
     return { ok: false, error: `No se pudo interpretar el esquema: ${err.message}` };
   }
 
+  // Sobreescribir filas por tabla si el usuario eligió un valor específico
+  const filasValidas = Number.isInteger(filasPorTabla) && filasPorTabla >= 10 && filasPorTabla <= 200;
+  if (filasValidas) {
+    for (const tabla of esquema.tablas) {
+      tabla.filas = filasPorTabla;
+    }
+    console.log('[IPC] datos:generar-dataset — filas sobreescritas a:', filasPorTabla);
+  }
+
   // Capa 2: generar filas falsas coherentes con faker
   let tablasGeneradas;
   try {
@@ -264,8 +307,8 @@ ipcMain.handle('datos:generar-dataset', async (_evento, descripcion) => {
   const esquemaFinal = gestor.obtenerEsquema();
 
   return {
-    ok: true,
-    esquema: esquemaFinal,
+    ok:         true,
+    esquema:    esquemaFinal,
     totalTablas:  tablasGeneradas.length,
     totalFilas:   tablasGeneradas.reduce((s, t) => s + t.filas.length, 0),
   };

@@ -7,7 +7,7 @@ Guía para Claude Code al trabajar con este repositorio.
 Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
 Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Versión actual: v0.5
+## Versión actual: v0.5.1
 
 Generación de datasets desde lenguaje natural: el usuario describe en español el dataset que
 quiere, la IA (Ollama) genera un esquema JSON estructurado, se generan filas falsas con faker
@@ -70,7 +70,8 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | `window.api.generarSQL(consulta)`     | `ai:generar-sql`         | ✅ v0.4   |
 | `window.api.verificarOllama()`        | `ai:verificar-ollama`    | ✅ v0.3   |
 | `window.api.ejecutarConsulta(sql)`    | `db:ejecutar-consulta`   | ✅ v0.4   |
-| `window.api.generarDataset(desc)`     | `datos:generar-dataset`  | ✅ v0.5   |
+| `window.api.generarDataset(desc, n)`   | `datos:generar-dataset`  | ✅ v0.5.1 |
+| `window.api.obtenerVistaTabla(nombre)` | `datos:obtener-vista-tabla` | ✅ v0.5.1 |
 
 ## Módulo Datasets (v0.5)
 
@@ -154,4 +155,5 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | **v0.3** ✅ | Integración Ollama: NL → SQL, SQL generado + explicación en panel derecho |
 | **v0.4** ✅ | Ejecución SQL con better-sqlite3 en memoria, tabla de resultados en UI |
 | **v0.5** ✅ | Generación de datasets desde lenguaje natural: Ollama + faker + modal UI |
+| **v0.5.1** ✅ | Refinamiento UX: vista previa de tabla, selector de filas, botón regenerar, resumen dataset |
 | v0.6 | Exportación de resultados, historial de consultas, pulido UX |

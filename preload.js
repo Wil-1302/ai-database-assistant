@@ -17,5 +17,9 @@ contextBridge.exposeInMainWorld('api', {
   verificarOllama:   ()         => ipcRenderer.invoke('ai:verificar-ollama'),
 
   // Generar dataset desde lenguaje natural (v0.5)
-  generarDataset: (descripcion) => ipcRenderer.invoke('datos:generar-dataset', descripcion),
+  // v0.5.1: acepta filasPorTabla como segundo argumento opcional
+  generarDataset: (descripcion, filasPorTabla) => ipcRenderer.invoke('datos:generar-dataset', descripcion, filasPorTabla),
+
+  // Vista previa de tabla — primeras 20 filas (v0.5.1)
+  obtenerVistaTabla: (nombreTabla) => ipcRenderer.invoke('datos:obtener-vista-tabla', nombreTabla),
 });

@@ -142,6 +142,12 @@ function escaparHTML(texto) {
 /** Indica si hay una generación en curso (evita envíos simultáneos) */
 let generandoSQL = false;
 
+/** true cuando hay resultados SQL activos en el panel derecho */
+let hayResultadosSQL = false;
+
+/** Última descripción usada al generar un dataset (null si se cargó desde archivo) */
+let ultimaDescripcionDataset = null;
+
 async function enviarMensaje() {
   const consulta = chatEntrada.value.trim();
   if (!consulta || generandoSQL) return;
@@ -219,12 +225,14 @@ function mostrarResultados(sql, explicacion, resultados) {
   if (resultados && resultados.columnas && resultados.columnas.length > 0) {
     renderizarTablaResultados(resultados);
   } else {
-    // Ocultar tabla si no hay resultados ejecutables
     resultadosTablaContenedor.classList.add('oculto');
   }
 
+  // Ocultar vista previa si estaba activa y mostrar el contenido SQL
+  document.getElementById('vistaPrevia').classList.add('oculto');
   resultadosVacio.classList.add('oculto');
   resultadosContenido.classList.remove('oculto');
+  hayResultadosSQL = true;
 }
 
 /**
@@ -335,22 +343,34 @@ function mostrarEstadoCarga(visible) {
 
 /**
  * Construye y muestra el árbol de tablas/columnas en el panel izquierdo.
+ * v0.5.1: añade resumen de dataset, botón regenerar y botón vista previa por tabla.
  * @param {{ tablas: { nombre: string, columnas: any[], totalFilas: number }[], archivoNombre: string }} esquema
  */
 function renderizarEsquema(esquema) {
   arbolEsquema.innerHTML = '';
 
-  // Cabecera con nombre del archivo y botón para cargar otro
+  // ── Cabecera: nombre de origen + botón Cambiar + botón Regenerar ──
+  const totalTablas = esquema.tablas.length;
+  const totalFilasAll = esquema.tablas.reduce((s, t) => s + t.totalFilas, 0);
+
   const cabeceraArchivo = document.createElement('div');
   cabeceraArchivo.className = 'esquema-archivo';
   cabeceraArchivo.innerHTML = `
-    <span class="esquema-archivo__icono">📄</span>
-    <span title="${escaparHTML(esquema.archivoNombre)}">${escaparHTML(esquema.archivoNombre)}</span>
+    <span class="esquema-archivo__icono">${ultimaDescripcionDataset ? '✨' : '📄'}</span>
+    <span class="esquema-archivo__nombre" title="${escaparHTML(esquema.archivoNombre)}">${escaparHTML(esquema.archivoNombre)}</span>
+    ${ultimaDescripcionDataset ? '<button class="btn-regenerar" id="btnRegenerar" title="Regenerar con la misma descripción">🔄</button>' : ''}
     <button class="btn-cargar-otro" id="btnCargarOtro">Cambiar</button>
   `;
   arbolEsquema.appendChild(cabeceraArchivo);
 
-  // Una sección por cada tabla
+  // ── Resumen del dataset ──
+  const resumenEl = document.createElement('div');
+  resumenEl.className = 'esquema-resumen';
+  resumenEl.textContent =
+    `${totalTablas} tabla${totalTablas !== 1 ? 's' : ''} · ${totalFilasAll.toLocaleString('es')} filas totales`;
+  arbolEsquema.appendChild(resumenEl);
+
+  // ── Una sección por cada tabla ──
   for (const tabla of esquema.tablas) {
     const seccion = document.createElement('div');
     seccion.className = 'esquema-tabla';
@@ -363,11 +383,12 @@ function renderizarEsquema(esquema) {
         <span>🗃️</span>
         <span class="esquema-tabla__nombre">${escaparHTML(tabla.nombre)}</span>
         <span class="esquema-tabla__info">${filasTxt}</span>
+        <button class="btn-ver-datos" title="Ver datos de ${escaparHTML(tabla.nombre)}">👁</button>
         <span class="esquema-tabla__flecha">▼</span>
       </div>
       <ul class="esquema-tabla__columnas">
         ${tabla.columnas.map((col) => `
-          <li class="esquema-columna" title="${escaparHTML(col.muestra.join(' · ') || '—')}">
+          <li class="esquema-columna" title="${escaparHTML((col.muestra || []).join(' · ') || '—')}">
             <span class="esquema-columna__nombre">${escaparHTML(col.nombre)}</span>
             <span class="tipo-badge tipo-badge--${col.tipo}">${etiquetaTipo(col.tipo)}</span>
           </li>
@@ -375,9 +396,10 @@ function renderizarEsquema(esquema) {
       </ul>
     `;
 
-    // Toggle plegar/desplegar tabla
+    // Toggle plegar/desplegar al hacer clic en la cabecera (pero no en el botón 👁)
     const cabecera = seccion.querySelector('.esquema-tabla__cabecera');
-    cabecera.addEventListener('click', () => {
+    cabecera.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-ver-datos')) return; // No propagar al toggle
       seccion.classList.toggle('esquema-tabla--plegada');
     });
     cabecera.addEventListener('keydown', (e) => {
@@ -385,6 +407,13 @@ function renderizarEsquema(esquema) {
         e.preventDefault();
         seccion.classList.toggle('esquema-tabla--plegada');
       }
+    });
+
+    // Botón vista previa (👁)
+    const btnVerDatos = seccion.querySelector('.btn-ver-datos');
+    btnVerDatos.addEventListener('click', (e) => {
+      e.stopPropagation();
+      mostrarVistaTabla(tabla.nombre);
     });
 
     arbolEsquema.appendChild(seccion);
@@ -395,8 +424,17 @@ function renderizarEsquema(esquema) {
   esquemaCargando.classList.add('oculto');
   arbolEsquema.classList.remove('oculto');
 
-  // Registrar botón "Cambiar archivo"
-  document.getElementById('btnCargarOtro').addEventListener('click', iniciarCargaArchivo);
+  // Registrar botones de la cabecera
+  document.getElementById('btnCargarOtro').addEventListener('click', () => {
+    ultimaDescripcionDataset = null;
+    iniciarCargaArchivo();
+  });
+
+  if (ultimaDescripcionDataset) {
+    document.getElementById('btnRegenerar').addEventListener('click', () => {
+      abrirModalDataset(); // El modal se abrirá ya pre-rellenado con ultimaDescripcionDataset
+    });
+  }
 }
 
 /** Devuelve la etiqueta corta para un tipo de dato. */
@@ -419,6 +457,9 @@ function actualizarEstado(mensaje, activo = false) {
 // -----------------------------------------------
 
 async function iniciarCargaArchivo() {
+  // Al cargar un archivo se pierde el dataset generado
+  ultimaDescripcionDataset = null;
+
   // 1. Abrir diálogo nativo
   let dialogoResultado;
   try {
@@ -496,18 +537,19 @@ async function iniciarCargaArchivo() {
 document.getElementById('btnCargarArchivo').addEventListener('click', iniciarCargaArchivo);
 
 // -----------------------------------------------
-// Generador de dataset con IA — v0.5
+// Generador de dataset con IA — v0.5 / v0.5.1
 // -----------------------------------------------
 
-const modalDataset      = document.getElementById('modalDataset');
-const modalDescripcion  = document.getElementById('modalDescripcion');
-const modalConfirmar    = document.getElementById('modalConfirmar');
-const modalCancelar     = document.getElementById('modalCancelar');
+const modalDataset       = document.getElementById('modalDataset');
+const modalDescripcion   = document.getElementById('modalDescripcion');
+const modalConfirmar     = document.getElementById('modalConfirmar');
+const modalCancelar      = document.getElementById('modalCancelar');
+const modalFilasPorTabla = document.getElementById('modalFilasPorTabla');
 
-/** Abre el modal de generación de dataset */
+/** Abre el modal. Si hay última descripción, precarga el campo. */
 function abrirModalDataset() {
-  modalDescripcion.value = '';
-  modalConfirmar.disabled = true;
+  modalDescripcion.value = ultimaDescripcionDataset || '';
+  modalConfirmar.disabled = (modalDescripcion.value.trim().length < 5);
   modalDataset.classList.remove('oculto');
   modalDescripcion.focus();
 }
@@ -547,17 +589,18 @@ document.querySelectorAll('.modal-ejemplo').forEach((btn) => {
 modalConfirmar.addEventListener('click', async () => {
   const descripcion = modalDescripcion.value.trim();
   if (!descripcion || descripcion.length < 5) return;
+  const filas = parseInt(modalFilasPorTabla.value, 10) || 50;
 
   cerrarModalDataset();
-  await generarDataset(descripcion);
+  await generarDataset(descripcion, filas);
 });
 
 /**
  * Flujo completo de generación de dataset desde descripción.
  * @param {string} descripcion
+ * @param {number} filasPorTabla
  */
-async function generarDataset(descripcion) {
-  // Mostrar en el chat que vamos a generar
+async function generarDataset(descripcion, filasPorTabla) {
   agregarMensaje(`Generando dataset: "${descripcion}"…`, 'usuario');
   const indicador = mostrarIndicadorGenerando();
 
@@ -566,7 +609,7 @@ async function generarDataset(descripcion) {
 
   let resultado;
   try {
-    resultado = await window.api.generarDataset(descripcion);
+    resultado = await window.api.generarDataset(descripcion, filasPorTabla);
   } catch (err) {
     indicador.remove();
     mostrarEstadoCarga(false);
@@ -585,6 +628,9 @@ async function generarDataset(descripcion) {
     agregarMensaje(resultado.error, 'error');
     return;
   }
+
+  // Guardar descripción para poder regenerar
+  ultimaDescripcionDataset = descripcion;
 
   // Renderizar el esquema en el panel izquierdo
   renderizarEsquema(resultado.esquema);
@@ -610,3 +656,91 @@ async function generarDataset(descripcion) {
 
 // Botón "✨ Generar" en la cabecera del panel izquierdo
 document.getElementById('btnGenerarDataset').addEventListener('click', abrirModalDataset);
+
+// -----------------------------------------------
+// Vista previa de tabla — v0.5.1
+// -----------------------------------------------
+
+const panelVistaPrevia        = document.getElementById('vistaPrevia');
+const vistaPreviaNombre       = document.getElementById('vistaPreviaNombre');
+const vistaPreviewContador    = document.getElementById('vistaPreviewContador');
+const vistaPreviewEncabezados = document.getElementById('vistaPreviewEncabezados');
+const vistaPreviewCuerpo      = document.getElementById('vistaPreviewCuerpo');
+
+/**
+ * Solicita y muestra las primeras filas de una tabla en el panel derecho.
+ * @param {string} nombreTabla
+ */
+async function mostrarVistaTabla(nombreTabla) {
+  // Cambiar al modo vista previa en el panel derecho
+  resultadosVacio.classList.add('oculto');
+  resultadosContenido.classList.add('oculto');
+  panelVistaPrevia.classList.remove('oculto');
+
+  vistaPreviaNombre.textContent = nombreTabla;
+  vistaPreviewContador.textContent = 'Cargando…';
+  vistaPreviewEncabezados.innerHTML = '';
+  vistaPreviewCuerpo.innerHTML = '';
+
+  let datos;
+  try {
+    datos = await window.api.obtenerVistaTabla(nombreTabla);
+  } catch (err) {
+    vistaPreviewContador.textContent = `Error: ${err.message}`;
+    return;
+  }
+
+  if (!datos.ok) {
+    vistaPreviewContador.textContent = `Error: ${datos.error}`;
+    return;
+  }
+
+  // Encabezados
+  const trHead = document.createElement('tr');
+  for (const col of datos.columnas) {
+    const th = document.createElement('th');
+    th.textContent = col;
+    trHead.appendChild(th);
+  }
+  vistaPreviewEncabezados.appendChild(trHead);
+
+  // Filas
+  if (datos.filas.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = datos.columnas.length;
+    td.className = 'tabla-sin-resultados';
+    td.textContent = 'La tabla no tiene filas.';
+    tr.appendChild(td);
+    vistaPreviewCuerpo.appendChild(tr);
+  } else {
+    for (const fila of datos.filas) {
+      const tr = document.createElement('tr');
+      for (const col of datos.columnas) {
+        const td = document.createElement('td');
+        const v = fila[col];
+        td.textContent = (v === null || v === undefined) ? '—' : String(v);
+        tr.appendChild(td);
+      }
+      vistaPreviewCuerpo.appendChild(tr);
+    }
+  }
+
+  // Contador
+  const mostradas = datos.filas.length;
+  vistaPreviewContador.textContent = datos.truncado
+    ? `${mostradas} de ${datos.totalFilas.toLocaleString('es')} filas`
+    : `${datos.totalFilas.toLocaleString('es')} fila${datos.totalFilas !== 1 ? 's' : ''}`;
+}
+
+/** Cierra la vista previa y vuelve al estado anterior del panel derecho. */
+function cerrarVistaPrevia() {
+  panelVistaPrevia.classList.add('oculto');
+  if (hayResultadosSQL) {
+    resultadosContenido.classList.remove('oculto');
+  } else {
+    resultadosVacio.classList.remove('oculto');
+  }
+}
+
+document.getElementById('btnCerrarVistaPrevia').addEventListener('click', cerrarVistaPrevia);
