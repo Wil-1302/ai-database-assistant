@@ -1,6 +1,6 @@
 {
   "name": "ai-database-assistant",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Asistente de escritorio con IA para consultar bases de datos en español",
   "main": "main.js",
   "scripts": {

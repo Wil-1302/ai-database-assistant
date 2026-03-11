@@ -199,6 +199,64 @@ const CAT = {
     'Logística', 'Administración', 'Legal y Cumplimiento', 'Producción', 'I+D',
   ],
   estados_proyecto: ['En planificación', 'En desarrollo', 'En revisión', 'Completado', 'Pausado', 'Cancelado'],
+
+  // ── Prisión ────────────────────────────────────────────────
+  delitos: [
+    'Robo con violencia', 'Tráfico de drogas', 'Homicidio', 'Fraude bancario',
+    'Estafa', 'Secuestro', 'Extorsión', 'Robo de vehículo', 'Asociación ilícita',
+    'Posesión de armas', 'Lavado de activos', 'Tráfico de personas',
+    'Falsificación de documentos', 'Corrupción', 'Agresión grave',
+  ],
+  categorias_delito: ['Delito menor', 'Delito grave', 'Crimen organizado', 'Delito económico', 'Delito violento'],
+  rangos_guardia: ['Guardia raso', 'Suboficial', 'Oficial', 'Teniente', 'Capitán', 'Mayor', 'Jefe de seguridad'],
+  turnos_guardia: ['Mañana 06:00-14:00', 'Tarde 14:00-22:00', 'Noche 22:00-06:00', 'Rotativo'],
+  tipos_bloque: ['Mínima seguridad', 'Media seguridad', 'Máxima seguridad', 'Aislamiento', 'Módulo femenino', 'Módulo juvenil'],
+  tipos_celda: ['Individual', 'Doble', 'Múltiple', 'Custodia especial'],
+  tipos_incidente: ['Pelea entre internos', 'Intento de fuga', 'Agresión a guardia', 'Autolesión', 'Incendio', 'Posesión de objetos prohibidos', 'Motín', 'Tráfico interno'],
+  gravedades_incidente: ['Leve', 'Moderada', 'Grave', 'Crítica'],
+  tipos_sancion: ['Amonestación', 'Restricción de visitas', 'Aislamiento temporal', 'Traslado de celda', 'Traslado de módulo'],
+  estados_prisionero: ['Activo', 'Libertad condicional', 'Libertad definitiva', 'Traslado', 'Fallecido'],
+  estados_celda: ['Ocupada', 'Libre', 'En mantenimiento', 'Reservada'],
+  parentescos: ['Padre/Madre', 'Cónyuge', 'Hijo/a', 'Hermano/a', 'Amigo/a', 'Abogado/a', 'Otro'],
+
+  // ── Minería ────────────────────────────────────────────────
+  minerales: ['Cobre', 'Oro', 'Plata', 'Hierro', 'Zinc', 'Plomo', 'Molibdeno', 'Litio', 'Cobalto', 'Níquel', 'Estaño', 'Tungsteno', 'Titanio', 'Manganeso'],
+  simbolos_mineral: ['Cu', 'Au', 'Ag', 'Fe', 'Zn', 'Pb', 'Mo', 'Li', 'Co', 'Ni', 'Sn', 'W', 'Ti', 'Mn'],
+  tipos_extraccion: ['Subterránea', 'A cielo abierto', 'Mixta', 'Por lixiviación', 'Aluvial'],
+  cargos_mineria: ['Operador de maquinaria', 'Ingeniero de minas', 'Técnico de explosivos', 'Jefe de turno', 'Supervisor de seguridad', 'Geólogo', 'Metalurgista', 'Mecánico industrial', 'Electricista industrial', 'Capataz'],
+  tipos_turno_mineria: ['Diurno', 'Nocturno', 'Rotativo 12h', 'Continuo'],
+  calidades_mineral: ['A', 'B', 'C', 'Premium', 'Estándar', 'Bajo grado'],
+  tipos_maquinaria: ['Excavadora', 'Cargador frontal', 'Camión de acarreo', 'Perforadora', 'Trituradora', 'Cintas transportadoras', 'Bomba de agua', 'Compresor', 'Grúa torre'],
+  estados_maquinaria: ['Operativa', 'En mantenimiento', 'Fuera de servicio', 'En reparación'],
+  tipos_mantenimiento: ['Preventivo', 'Correctivo', 'Predictivo', 'Emergencia'],
+
+  // ── Banco / Finanzas ───────────────────────────────────────
+  tipos_cuenta: ['Cuenta corriente', 'Cuenta de ahorro', 'Cuenta de inversión', 'Cuenta empresarial', 'Cuenta nómina'],
+  tipos_transaccion: ['Depósito', 'Retiro', 'Transferencia entrante', 'Transferencia saliente', 'Pago de servicio', 'Pago de tarjeta', 'Débito automático', 'Cargo por servicio'],
+  tipos_tarjeta: ['Débito Visa', 'Débito Mastercard', 'Crédito Visa', 'Crédito Mastercard', 'Crédito Amex', 'Prepago'],
+  tipos_prestamo: ['Préstamo personal', 'Préstamo hipotecario', 'Préstamo vehicular', 'Préstamo estudiantil', 'Préstamo empresarial', 'Línea de crédito'],
+  estados_cuenta: ['Activa', 'Bloqueada', 'Cerrada', 'Suspendida'],
+  estados_prestamo: ['Vigente', 'Al día', 'En mora', 'Cancelado', 'En reestructuración'],
+  tipos_cliente_banco: ['Natural', 'Jurídico', 'Premium', 'Pyme'],
+
+  // ── Logística / Transporte ─────────────────────────────────
+  tipos_vehiculo: ['Furgoneta', 'Camión ligero', 'Camión pesado', 'Motocicleta', 'Bicicleta eléctrica', 'Minibús de carga'],
+  estados_envio: ['Pendiente', 'Recogido', 'En tránsito', 'En depósito', 'En camino al destino', 'Entregado', 'Devuelto', 'Perdido'],
+  tipos_ruta: ['Urbana', 'Interurbana', 'Internacional', 'Zona industrial', 'Zona residencial'],
+  estados_pedido_logistica: ['Recibido', 'Preparando', 'Listo para envío', 'En ruta', 'Entregado', 'Devolución'],
+  codigos_seguimiento_prefijos: ['LOG', 'ENV', 'PKG', 'SHP', 'TRK'],
+
+  // ── Turismo ────────────────────────────────────────────────
+  tipos_habitacion: ['Individual', 'Doble', 'Suite', 'Suite ejecutiva', 'Familiar', 'Ático', 'Cabaña'],
+  categorias_destino: ['Playa', 'Montaña', 'Ciudad cultural', 'Aventura', 'Ecoturismo', 'Gastronomía', 'Crucero'],
+  estados_reserva: ['Confirmada', 'Pendiente de pago', 'Cancelada', 'Check-in realizado', 'Check-out realizado'],
+  metodos_pago: ['Tarjeta de crédito', 'Transferencia bancaria', 'Efectivo', 'PayPal', 'Criptomoneda'],
+
+  // ── Fábrica ────────────────────────────────────────────────
+  areas_fabrica: ['Producción', 'Ensamble', 'Control de calidad', 'Almacén', 'Mantenimiento', 'Logística interna', 'Fundición', 'Pintura', 'Empaque'],
+  turnos_fabrica: ['Mañana 06:00-14:00', 'Tarde 14:00-22:00', 'Noche 22:00-06:00'],
+  estados_orden: ['Planificada', 'En producción', 'En control de calidad', 'Completada', 'Suspendida', 'Cancelada'],
+  cargos_fabrica: ['Operario', 'Técnico de mantenimiento', 'Supervisor de planta', 'Ingeniero de producción', 'Jefe de turno', 'Inspector de calidad', 'Mecánico', 'Electricista'],
 };
 
 // -----------------------------------------------
@@ -458,6 +516,254 @@ function obtenerGeneradorSemantico(nombreTabla, nombreColumna) {
     if (/producto|articulo/.test(t))
       return aleatorio(() => azar(['Disponible', 'Sin stock', 'Descontinuado', 'En pedido']));
   }
+
+  if (/^cargo$/.test(c))       return aleatorio(() => azar(CAT.cargos));
+  if (/^departamento$/.test(c)) return aleatorio(() => azar(CAT.departamentos));
+
+  // ── PRISIÓN ───────────────────────────────────────────────────────────
+
+  if (/^prisionero|^recluso|^interno|^penado/.test(t)) {
+    if (/^delito$/.test(c))               return aleatorio(() => azar(CAT.delitos));
+    if (/categoria_delito|tipo_delito/.test(c)) return aleatorio(() => azar(CAT.categorias_delito));
+    if (/^estado$/.test(c))               return aleatorio(() => azar(CAT.estados_prisionero));
+    if (/condena|pena|sentencia/.test(c)) return aleatorio(() => faker.number.int({ min: 1, max: 30 }) + ' años');
+  }
+
+  if (/^guardia/.test(t)) {
+    if (/^rango$/.test(c))  return aleatorio(() => azar(CAT.rangos_guardia));
+    if (/^turno$/.test(c))  return aleatorio(() => azar(CAT.turnos_guardia));
+  }
+
+  if (/^bloque/.test(t)) {
+    if (/^nombre$/.test(c)) return aleatorio(() => `Bloque ${faker.string.alpha(1).toUpperCase()}`);
+    if (/^tipo$/.test(c))   return aleatorio(() => azar(CAT.tipos_bloque));
+    if (/capacidad/.test(c)) return aleatorio(() => faker.number.int({ min: 20, max: 80 }));
+    if (/^estado$/.test(c)) return aleatorio(() => azar(['Operativo', 'En renovación', 'Cerrado']));
+  }
+
+  if (/^celda/.test(t)) {
+    if (/^numero$|^num_celda$/.test(c)) return aleatorio(() => faker.string.alpha(1).toUpperCase() + '-' + faker.number.int({ min: 1, max: 50 }));
+    if (/^tipo$/.test(c))   return aleatorio(() => azar(CAT.tipos_celda));
+    if (/^estado$/.test(c)) return aleatorio(() => azar(CAT.estados_celda));
+    if (/capacidad/.test(c)) return aleatorio(() => faker.number.int({ min: 1, max: 4 }));
+  }
+
+  if (/^incidente/.test(t)) {
+    if (/^tipo$/.test(c))      return aleatorio(() => azar(CAT.tipos_incidente));
+    if (/gravedad/.test(c))    return aleatorio(() => azar(CAT.gravedades_incidente));
+    if (/descripcion/.test(c)) return aleatorio(() => `${azar(CAT.tipos_incidente)} — ${faker.lorem.sentence(6)}`);
+    if (/^estado$/.test(c))    return aleatorio(() => azar(['Reportado', 'Investigado', 'Resuelto', 'Cerrado']));
+  }
+
+  if (/^sancion/.test(t)) {
+    if (/^tipo$/.test(c))   return aleatorio(() => azar(CAT.tipos_sancion));
+    if (/^motivo$/.test(c)) return aleatorio(() => azar(CAT.tipos_incidente));
+    if (/^estado$/.test(c)) return aleatorio(() => azar(['Vigente', 'Cumplida', 'Apelada', 'Anulada']));
+  }
+
+  if (/^visita/.test(t)) {
+    if (/visitante_nombre|nombre_visitante/.test(c)) return aleatorio(() => faker.person.fullName());
+    if (/parentesco/.test(c))  return aleatorio(() => azar(CAT.parentescos));
+    if (/duracion/.test(c))    return aleatorio(() => faker.number.int({ min: 15, max: 120 }));
+    if (/^estado$/.test(c))    return aleatorio(() => azar(['Aprobada', 'Realizada', 'Cancelada', 'Denegada']));
+  }
+
+  // ── MINERÍA ───────────────────────────────────────────────────────────
+
+  if (/^mina/.test(t)) {
+    if (/^nombre$|^nombre_mina$/.test(c)) return aleatorio(() => `Mina ${azar(['El Roble', 'La Esperanza', 'San Cristóbal', 'Las Pampas', 'El Teniente', 'La Escondida', 'Cerro Verde', 'Don Luis'])}`);
+    if (/mineral_principal/.test(c))      return aleatorio(() => azar(CAT.minerales));
+    if (/tipo_extraccion|metodo/.test(c)) return aleatorio(() => azar(CAT.tipos_extraccion));
+    if (/^estado$/.test(c))               return aleatorio(() => azar(['Activa', 'En exploración', 'En pausa', 'Agotada', 'En cierre']));
+  }
+
+  if (/^mineral/.test(t)) {
+    if (/^nombre$|^nombre_mineral$/.test(c)) return porIndice(CAT.minerales);
+    if (/^simbolo$/.test(c))                 return porIndice(CAT.simbolos_mineral);
+    if (/pureza/.test(c))                    return aleatorio(() => parseFloat(faker.number.float({ min: 60, max: 99, fractionDigits: 1 })));
+    if (/precio_tonelada|precio/.test(c))    return aleatorio(() => faker.number.int({ min: 500, max: 80000 }));
+  }
+
+  if (/^produccion/.test(t) && !/detalle/.test(t)) {
+    if (/cantidad_toneladas|cantidad|volumen/.test(c))
+      return aleatorio(() => parseFloat(faker.number.float({ min: 10, max: 5000, fractionDigits: 1 })));
+    if (/^pureza$/.test(c))
+      return aleatorio(() => parseFloat(faker.number.float({ min: 60, max: 99, fractionDigits: 1 })));
+    if (/^calidad$/.test(c)) return aleatorio(() => azar(CAT.calidades_mineral));
+  }
+
+  // Empleados en contexto de minería
+  if (/^empleado/.test(t) && /^cargo$|^especialidad$|^puesto$/.test(c)) {
+    return aleatorio(() => azar(CAT.cargos_mineria));
+  }
+
+  // Turnos en minería
+  if (/^turno/.test(t) && t !== 'turnos_guardia') {
+    if (/^tipo$/.test(c)) return aleatorio(() => azar(CAT.tipos_turno_mineria));
+  }
+
+  // Maquinaria (fabrica + mineria)
+  if (/^maquinaria|^maquina/.test(t)) {
+    if (/^nombre$|^tipo$/.test(c)) return aleatorio(() => azar(CAT.tipos_maquinaria));
+    if (/^estado$/.test(c))        return aleatorio(() => azar(CAT.estados_maquinaria));
+  }
+
+  if (/^mantenimiento/.test(t)) {
+    if (/^tipo$/.test(c)) return aleatorio(() => azar(CAT.tipos_mantenimiento));
+  }
+
+  // ── BANCO / FINANZAS ──────────────────────────────────────────────────
+
+  if (/^cuenta/.test(t)) {
+    if (/tipo_cuenta|^tipo$/.test(c))    return aleatorio(() => azar(CAT.tipos_cuenta));
+    if (/^estado$/.test(c))              return aleatorio(() => azar(CAT.estados_cuenta));
+    if (/^saldo$/.test(c))               return aleatorio(() => parseFloat(faker.number.float({ min: 0, max: 50000, fractionDigits: 2 })));
+    if (/numero_cuenta/.test(c))         return aleatorio(() => faker.string.numeric(12));
+  }
+
+  if (/^transaccion|^movimiento/.test(t)) {
+    if (/^tipo$/.test(c))      return aleatorio(() => azar(CAT.tipos_transaccion));
+    if (/^monto$|^importe$/.test(c)) return aleatorio(() => parseFloat(faker.number.float({ min: 5, max: 10000, fractionDigits: 2 })));
+    if (/descripcion/.test(c)) return aleatorio(() => azar(CAT.tipos_transaccion));
+    if (/^estado$/.test(c))    return aleatorio(() => azar(['Completada', 'Pendiente', 'Rechazada', 'Reversada']));
+  }
+
+  if (/^tarjeta/.test(t)) {
+    if (/^tipo$/.test(c))           return aleatorio(() => azar(CAT.tipos_tarjeta));
+    if (/^estado$/.test(c))         return aleatorio(() => azar(['Activa', 'Bloqueada', 'Vencida', 'Cancelada']));
+    if (/numero_tarjeta/.test(c))   return aleatorio(() => '**** **** **** ' + faker.string.numeric(4));
+    if (/limite/.test(c))           return aleatorio(() => faker.number.int({ min: 500, max: 20000 }));
+  }
+
+  if (/^prestamo/.test(t)) {
+    if (/^tipo$/.test(c))        return aleatorio(() => azar(CAT.tipos_prestamo));
+    if (/^estado$/.test(c))      return aleatorio(() => azar(CAT.estados_prestamo));
+    if (/tasa_interes/.test(c))  return aleatorio(() => parseFloat(faker.number.float({ min: 5, max: 30, fractionDigits: 2 })));
+    if (/plazo_meses/.test(c))   return aleatorio(() => faker.helpers.arrayElement([6, 12, 24, 36, 48, 60, 120]));
+    if (/cuota_mensual/.test(c)) return aleatorio(() => parseFloat(faker.number.float({ min: 50, max: 2000, fractionDigits: 2 })));
+  }
+
+  // Clientes de banco
+  if (/^cliente/.test(t) && /tipo_cliente/.test(c))
+    return aleatorio(() => azar(CAT.tipos_cliente_banco));
+
+  // ── LOGÍSTICA ─────────────────────────────────────────────────────────
+
+  if (/^repartidor|^conductor|^mensajero/.test(t)) {
+    if (/^vehiculo$/.test(c)) return aleatorio(() => azar(CAT.tipos_vehiculo));
+    if (/^zona$/.test(c))     return aleatorio(() => `Zona ${faker.string.alpha(1).toUpperCase()}${faker.number.int({ min: 1, max: 9 })}`);
+    if (/^estado$/.test(c))   return aleatorio(() => azar(['Activo', 'En ruta', 'Disponible', 'Inactivo']));
+  }
+
+  if (/^envio|^despacho|^paquete/.test(t)) {
+    if (/^estado$/.test(c))               return aleatorio(() => azar(CAT.estados_envio));
+    if (/codigo_seguimiento|tracking/.test(c))
+      return aleatorio(() => azar(CAT.codigos_seguimiento_prefijos) + faker.string.numeric(10));
+  }
+
+  if (/^ruta/.test(t)) {
+    if (/^tipo$/.test(c))    return aleatorio(() => azar(CAT.tipos_ruta));
+    if (/distancia/.test(c)) return aleatorio(() => faker.number.int({ min: 5, max: 800 }));
+    if (/tiempo/.test(c))    return aleatorio(() => parseFloat(faker.number.float({ min: 0.5, max: 24, fractionDigits: 1 })));
+  }
+
+  if (/^pedido/.test(t)) {
+    if (/^estado$/.test(c)) return aleatorio(() => azar(CAT.estados_pedido_logistica));
+  }
+
+  if (/^vehiculo/.test(t)) {
+    if (/^tipo$/.test(c))     return aleatorio(() => azar(CAT.tipos_vehiculo));
+    if (/^estado$/.test(c))   return aleatorio(() => azar(['Disponible', 'En ruta', 'En mantenimiento', 'Fuera de servicio']));
+    if (/capacidad/.test(c))  return aleatorio(() => faker.number.int({ min: 100, max: 5000 }));
+    if (/^placa$/.test(c))    return aleatorio(() => faker.string.alpha(3).toUpperCase() + '-' + faker.string.numeric(4));
+  }
+
+  // ── TURISMO ───────────────────────────────────────────────────────────
+
+  if (/^hotel/.test(t)) {
+    if (/categoria_estrellas|estrellas/.test(c)) return aleatorio(() => faker.number.int({ min: 1, max: 5 }));
+    if (/precio_noche/.test(c))                  return aleatorio(() => faker.number.int({ min: 30, max: 800 }));
+    if (/^estado$/.test(c))                      return aleatorio(() => azar(['Activo', 'Temporalmente cerrado', 'En renovación']));
+  }
+
+  if (/^habitacion/.test(t)) {
+    if (/^tipo$/.test(c))       return aleatorio(() => azar(CAT.tipos_habitacion));
+    if (/^estado$/.test(c))     return aleatorio(() => azar(['Disponible', 'Ocupada', 'En limpieza', 'En mantenimiento', 'Reservada']));
+    if (/precio_noche/.test(c)) return aleatorio(() => faker.number.int({ min: 30, max: 600 }));
+  }
+
+  if (/^reserva/.test(t)) {
+    if (/^estado$/.test(c))      return aleatorio(() => azar(CAT.estados_reserva));
+    if (/tipo_pago|metodo/.test(c)) return aleatorio(() => azar(CAT.metodos_pago));
+  }
+
+  if (/^destino/.test(t) && !/aeropuerto/.test(t)) {
+    if (/^categoria$/.test(c)) return aleatorio(() => azar(CAT.categorias_destino));
+  }
+
+  if (/^tour/.test(t)) {
+    if (/^nombre$/.test(c))
+      return aleatorio(() => `Tour ${azar(['cultural', 'de aventura', 'gastronómico', 'histórico', 'ecológico', 'nocturno'])} por ${faker.location.city()}`);
+    if (/duracion/.test(c)) return aleatorio(() => faker.number.int({ min: 2, max: 12 }));
+    if (/^cupo$/.test(c))   return aleatorio(() => faker.number.int({ min: 5, max: 30 }));
+  }
+
+  // ── FÁBRICA ───────────────────────────────────────────────────────────
+
+  if (/^orden_produccion|^orden/.test(t)) {
+    if (/^estado$/.test(c)) return aleatorio(() => azar(CAT.estados_orden));
+    if (/cantidad/.test(c)) return aleatorio(() => faker.number.int({ min: 50, max: 5000 }));
+  }
+
+  if (/^materia_prima/.test(t)) {
+    if (/^nombre$/.test(c)) return aleatorio(() => faker.helpers.arrayElement(['Acero laminado', 'Aluminio 6061', 'Plástico ABS', 'Cobre electrolítico', 'Resina epóxica', 'Caucho sintético', 'Fibra de vidrio', 'Poliuretano']));
+    if (/^unidad$/.test(c)) return aleatorio(() => faker.helpers.arrayElement(['kg', 'ton', 'm', 'm²', 'L', 'ud']));
+    if (/^proveedor$/.test(c)) return aleatorio(() => faker.company.name());
+  }
+
+  // Empleados en fabrica
+  if (/^empleado/.test(t) && /^area$/.test(c))
+    return aleatorio(() => azar(CAT.areas_fabrica));
+  if (/^turno$/.test(c) && /fabrica|planta|manufactura/.test(t))
+    return aleatorio(() => azar(CAT.turnos_fabrica));
+
+  // ── UNIVERSIDAD ───────────────────────────────────────────────────────
+
+  if (/^facultad/.test(t)) {
+    if (/^nombre$/.test(c))  return porIndice(['Ingeniería', 'Medicina', 'Derecho', 'Economía', 'Ciencias Exactas', 'Humanidades', 'Arquitectura', 'Ciencias Sociales', 'Educación', 'Artes']);
+    if (/^decano$/.test(c))  return aleatorio(() => `Dr. ${faker.person.fullName()}`);
+  }
+
+  if (/^estudiante/.test(t)) {
+    if (/^carrera$/.test(c))  return aleatorio(() => faker.helpers.arrayElement(['Ingeniería de Sistemas', 'Medicina', 'Administración de Empresas', 'Derecho', 'Contabilidad', 'Arquitectura', 'Ingeniería Civil', 'Psicología', 'Enfermería', 'Economía']));
+    if (/^semestre$/.test(c)) return aleatorio(() => faker.number.int({ min: 1, max: 10 }));
+  }
+
+  if (/^aula/.test(t)) {
+    if (/^nombre$|^numero$/.test(c)) return aleatorio(() => `Aula ${faker.string.alpha(1).toUpperCase()}-${faker.number.int({ min: 100, max: 999 })}`);
+    if (/^tipo$/.test(c))            return aleatorio(() => faker.helpers.arrayElement(['Teórica', 'Laboratorio', 'Taller', 'Anfiteatro', 'Sala virtual']));
+    if (/^edificio$/.test(c))        return aleatorio(() => `Edificio ${faker.string.alpha(1).toUpperCase()}`);
+    if (/capacidad/.test(c))         return aleatorio(() => faker.number.int({ min: 20, max: 200 }));
+  }
+
+  if (/^nota$|^calificacion/.test(t)) {
+    if (/nota_final|nota_parcial|^nota$/.test(c)) return aleatorio(() => parseFloat(faker.number.float({ min: 0, max: 20, fractionDigits: 1 })));
+    if (/^estado$/.test(c)) return aleatorio(() => faker.helpers.arrayElement(['Aprobado', 'Reprobado', 'Pendiente', 'Sin calificar']));
+  }
+
+  // ── FARMACIA ──────────────────────────────────────────────────────────
+
+  if (/receta_medica|receta_farmacia/.test(t)) {
+    if (/^medico$/.test(c))     return aleatorio(() => `Dr. ${faker.person.fullName()}`);
+    if (/diagnostico/.test(c))  return aleatorio(() => azar(CAT.enfermedades));
+    if (/^estado$/.test(c))     return aleatorio(() => azar(['Vigente', 'Dispensada', 'Vencida', 'Cancelada']));
+  }
+
+  // Medicamentos con requiere_receta
+  if (/^medicamento/.test(t) && /requiere_receta/.test(c))
+    return null; // booleano lo maneja el tipo
+
+  // ── COLUMNAS TRANSVERSALES (estado contextual) ────────────────────────
 
   if (/^cargo$/.test(c))       return aleatorio(() => azar(CAT.cargos));
   if (/^departamento$/.test(c)) return aleatorio(() => azar(CAT.departamentos));

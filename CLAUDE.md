@@ -7,19 +7,18 @@ Guía para Claude Code al trabajar con este repositorio.
 Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
 Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Versión actual: v0.6.2
+## Versión actual: v0.6.3
 
-Calidad semántica drásticamente mejorada. Cambios sobre v0.6.1:
-- Nuevo módulo `src/datasets/catalogos-semanticos.js` con catálogos reales por dominio y función `obtenerGeneradorSemantico(tabla, columna)` que retorna un generador con firma `(indice) => valor`
-- Hospital expandido: 9 tablas con cadena relacional completa (especialidades → salas → doctores → pacientes → citas → tratamientos → recetas → medicamentos + enfermedades)
-- Datos semánticamente correctos: medicamentos con nombre real + principio activo + laboratorio + presentación; especialidades médicas reales; salas de hospital reales; enfermedades reales; tipos de tratamiento y recetas con dosis/frecuencia reales
-- Aeropuertos consistentes por fila: ciudad/pais/aeropuerto/codigo_iata son coherentes entre sí
-- Vuelos: número de vuelo con código de aerolínea real; estados realistas; clases de vuelo correctas
-- Restaurante: nombres reales de platos, estados de mesa contextual, capacidades
-- Escuela: nombres reales de materias, notas en escala 0–20, tipos de evaluación
-- Empresa: cargos y departamentos reales
-- Generador de filas pasa `nombreTabla` por toda la cadena para que el lookup sea table-aware
-- El patrón genérico `/nombre/` ya no captura columnas de dominio (medicamentos.nombre, salas.nombre, etc.)
+Generalización a nuevos dominios, base/extra split y fallback genérico. Cambios sobre v0.6.2:
+- 8 nuevos dominios: farmacia, banco, universidad, fabrica, prision, mineria, logistica, turismo (total: 15)
+- Cada dominio dividido en `tablas_base` (por defecto, 4-6 tablas) y `tablas_extra` (solo con masRiqueza)
+- Hospital: base=6 tablas, extra=3 (salas/enfermedades/recetas). Antes: siempre 9 tablas
+- `detectarDominio` ahora usa puntuación por matches (mejor vs. peor keyword match), no primer match
+- Dominio 'empresa' ya no captura 'empleado' para evitar colisión con minería/fábrica/prisión
+- Paso 1 de enriquecimiento: aplica plantilla de dominio SIEMPRE cuando hay match (no solo si pocas col.)
+- `enriquecimientoGenerico()`: para dominios no reconocidos, resuelve _id colgantes (crea tabla mínima referenciada) y añade tabla de detalle si hay tabla de transacciones sin ella
+- Catálogos nuevos: delitos, cargos_minería, minerales, rangos_guardia, tipos_cuenta, tipos_transacción, tipos_habitación, estados_envío, etc.
+- Lookups semánticos para: prisión, minería, banco, logística, turismo, fábrica, universidad
 
 ## Comandos
 
@@ -196,4 +195,5 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | **v0.6** ✅ | Generación de datasets enriquecida (heurísticas de dominio) + exportación CSV/JSON |
 | **v0.6.1** ✅ | Reparación y endurecimiento: textarea sin límite, sort topológico, enriquecedor más agresivo |
 | **v0.6.2** ✅ | Calidad semántica: catálogos reales, hospital 9 tablas, aeropuertos coherentes, generación table-aware |
+| **v0.6.3** ✅ | 15 dominios, base/extra split, enriquecimientoGenerico(), detección por puntuación, farmacia/banco/prisión/minería/universidad/logística/turismo/fábrica |
 | v0.7 | Historial de consultas, pulido UX, soporte SQLite real |
