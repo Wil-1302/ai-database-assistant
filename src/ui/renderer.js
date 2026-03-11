@@ -212,6 +212,9 @@ const tablaEncabezados            = document.getElementById('tablaEncabezados');
 const tablaCuerpo                 = document.getElementById('tablaCuerpo');
 const resultadosContador          = document.getElementById('resultadosContador');
 
+/** Almacena los últimos resultados de consulta SQL para poder exportarlos. */
+let ultimosResultadosSQL = null;
+
 /**
  * Muestra el SQL, la explicación y (si hay) la tabla de resultados en el panel derecho.
  * @param {string} sql
@@ -240,6 +243,8 @@ function mostrarResultados(sql, explicacion, resultados) {
  * @param {{ columnas: string[], filas: object[], totalFilas: number, truncado: boolean }} param0
  */
 function renderizarTablaResultados({ columnas, filas, totalFilas, truncado }) {
+  // Guardar para exportación posterior
+  ultimosResultadosSQL = { columnas, filas };
   // --- Encabezados ---
   tablaEncabezados.innerHTML = '';
   const trHead = document.createElement('tr');
@@ -302,6 +307,38 @@ btnCopiarSQL.addEventListener('click', () => {
 });
 
 // -----------------------------------------------
+// Exportación — v0.6
+// -----------------------------------------------
+
+document.getElementById('btnExportarCSV').addEventListener('click', async () => {
+  if (!ultimosResultadosSQL) {
+    mostrarNotificacion('No hay resultados para exportar.', 'error');
+    return;
+  }
+  const res = await window.api.exportarResultadosCSV(ultimosResultadosSQL);
+  if (res.cancelado) return;
+  if (!res.ok) {
+    mostrarNotificacion(`Error al exportar CSV: ${res.error}`, 'error');
+    return;
+  }
+  mostrarNotificacion(`CSV exportado correctamente.`, 'exito');
+});
+
+document.getElementById('btnExportarJSON').addEventListener('click', async () => {
+  if (!ultimosResultadosSQL) {
+    mostrarNotificacion('No hay resultados para exportar.', 'error');
+    return;
+  }
+  const res = await window.api.exportarResultadosJSON({ filas: ultimosResultadosSQL.filas });
+  if (res.cancelado) return;
+  if (!res.ok) {
+    mostrarNotificacion(`Error al exportar JSON: ${res.error}`, 'error');
+    return;
+  }
+  mostrarNotificacion(`JSON exportado correctamente.`, 'exito');
+});
+
+// -----------------------------------------------
 // Notificaciones (toast)
 // -----------------------------------------------
 
@@ -359,6 +396,7 @@ function renderizarEsquema(esquema) {
     <span class="esquema-archivo__icono">${ultimaDescripcionDataset ? '✨' : '📄'}</span>
     <span class="esquema-archivo__nombre" title="${escaparHTML(esquema.archivoNombre)}">${escaparHTML(esquema.archivoNombre)}</span>
     ${ultimaDescripcionDataset ? '<button class="btn-regenerar" id="btnRegenerar" title="Regenerar con la misma descripción">🔄</button>' : ''}
+    <button class="btn-exportar-dataset" id="btnExportarDataset" title="Exportar dataset completo a JSON">↓</button>
     <button class="btn-cargar-otro" id="btnCargarOtro">Cambiar</button>
   `;
   arbolEsquema.appendChild(cabeceraArchivo);
@@ -428,6 +466,16 @@ function renderizarEsquema(esquema) {
   document.getElementById('btnCargarOtro').addEventListener('click', () => {
     ultimaDescripcionDataset = null;
     iniciarCargaArchivo();
+  });
+
+  document.getElementById('btnExportarDataset').addEventListener('click', async () => {
+    const res = await window.api.exportarDatasetJSON();
+    if (res.cancelado) return;
+    if (!res.ok) {
+      mostrarNotificacion(`Error al exportar dataset: ${res.error}`, 'error');
+      return;
+    }
+    mostrarNotificacion('Dataset exportado a JSON correctamente.', 'exito');
   });
 
   if (ultimaDescripcionDataset) {

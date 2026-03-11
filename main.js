@@ -8,6 +8,9 @@ const { verificarDisponibilidad } = require('./src/ia/cliente-ollama');
 const { crearDBDesdeDatos, ejecutarConsulta, escaparIdentificador, necesitaEscape } = require('./src/db/ejecutor-sql');
 const { interpretarEsquema } = require('./src/datasets/interpretador-esquema');
 const { generarTablasDesdeEsquema } = require('./src/datasets/generador-filas');
+const { enriquecerEsquema } = require('./src/datasets/enriquecedor-esquema');
+const { exportarCSV } = require('./src/exportador/exportar-csv');
+const { exportarResultadosJSON, exportarDatasetJSON } = require('./src/exportador/exportar-json');
 
 // Referencia global para evitar que la ventana sea eliminada por el GC
 let ventanaPrincipal = null;
@@ -277,6 +280,11 @@ ipcMain.handle('datos:generar-dataset', async (_evento, descripcion, filasPorTab
     return { ok: false, error: `No se pudo interpretar el esquema: ${err.message}` };
   }
 
+  // Capa 1b: enriquecer el esquema con heurísticas de dominio
+  // Añade tablas faltantes y amplía columnas escasas sin depender solo de la IA
+  esquema = enriquecerEsquema(esquema, descripcion.trim());
+  console.log('[IPC] datos:generar-dataset — esquema enriquecido:', esquema.tablas.map((t) => `${t.nombre}(${t.columnas.length}cols)`).join(', '));
+
   // Sobreescribir filas por tabla si el usuario eligió un valor específico
   const filasValidas = Number.isInteger(filasPorTabla) && filasPorTabla >= 10 && filasPorTabla <= 200;
   if (filasValidas) {
@@ -312,6 +320,74 @@ ipcMain.handle('datos:generar-dataset', async (_evento, descripcion, filasPorTab
     totalTablas:  tablasGeneradas.length,
     totalFilas:   tablasGeneradas.reduce((s, t) => s + t.filas.length, 0),
   };
+});
+
+// Exportar resultados SQL a CSV — v0.6
+ipcMain.handle('exportar:resultados-csv', async (_evento, { columnas, filas }) => {
+  if (!ventanaPrincipal) return { ok: false, error: 'Sin ventana activa.' };
+
+  const resultado = await dialog.showSaveDialog(ventanaPrincipal, {
+    title: 'Exportar resultados a CSV',
+    defaultPath: 'resultados.csv',
+    filters: [{ name: 'CSV', extensions: ['csv'] }],
+  });
+
+  if (resultado.canceled || !resultado.filePath) return { ok: false, cancelado: true };
+
+  try {
+    exportarCSV(resultado.filePath, columnas, filas);
+    return { ok: true, ruta: resultado.filePath };
+  } catch (err) {
+    console.error('[IPC] exportar:resultados-csv — error:', err.message);
+    return { ok: false, error: err.message };
+  }
+});
+
+// Exportar resultados SQL a JSON — v0.6
+ipcMain.handle('exportar:resultados-json', async (_evento, { filas }) => {
+  if (!ventanaPrincipal) return { ok: false, error: 'Sin ventana activa.' };
+
+  const resultado = await dialog.showSaveDialog(ventanaPrincipal, {
+    title: 'Exportar resultados a JSON',
+    defaultPath: 'resultados.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+  });
+
+  if (resultado.canceled || !resultado.filePath) return { ok: false, cancelado: true };
+
+  try {
+    exportarResultadosJSON(resultado.filePath, filas);
+    return { ok: true, ruta: resultado.filePath };
+  } catch (err) {
+    console.error('[IPC] exportar:resultados-json — error:', err.message);
+    return { ok: false, error: err.message };
+  }
+});
+
+// Exportar dataset completo a JSON — v0.6
+ipcMain.handle('exportar:dataset-json', async () => {
+  if (!ventanaPrincipal) return { ok: false, error: 'Sin ventana activa.' };
+
+  if (!gestor.hayDatosCargados()) {
+    return { ok: false, error: 'No hay datos cargados para exportar.' };
+  }
+
+  const resultado = await dialog.showSaveDialog(ventanaPrincipal, {
+    title: 'Exportar dataset a JSON',
+    defaultPath: 'dataset.json',
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+  });
+
+  if (resultado.canceled || !resultado.filePath) return { ok: false, cancelado: true };
+
+  try {
+    const tablas = gestor.obtenerTodosLosDatos();
+    exportarDatasetJSON(resultado.filePath, tablas);
+    return { ok: true, ruta: resultado.filePath };
+  } catch (err) {
+    console.error('[IPC] exportar:dataset-json — error:', err.message);
+    return { ok: false, error: err.message };
+  }
 });
 
 // --- Ciclo de vida de la app ---

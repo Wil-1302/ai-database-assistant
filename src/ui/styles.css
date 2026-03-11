@@ -1207,3 +1207,53 @@ html, body {
 .modal-btn--primario:hover:not(:disabled) {
   opacity: 0.88;
 }
+
+/* ─── Exportación — v0.6 ─── */
+
+/* Grupo de botones de exportación en la cabecera de resultados */
+.bloque-resultados__exportar {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  padding-left: 8px;
+}
+
+/* Botón exportar CSV/JSON en panel de resultados */
+.btn-exportar {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-exportar:hover {
+  color: var(--color-acento);
+  border-color: var(--color-acento);
+  background: var(--color-acento-suave);
+}
+
+/* Botón exportar dataset en la cabecera del árbol de esquema */
+.btn-exportar-dataset {
+  padding: 2px 6px;
+  background: transparent;
+  color: var(--color-texto-suave);
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+  title: "Exportar dataset";
+}
+
+.btn-exportar-dataset:hover {
+  color: var(--color-exito);
+  border-color: var(--color-exito);
+}

@@ -22,4 +22,9 @@ contextBridge.exposeInMainWorld('api', {
 
   // Vista previa de tabla — primeras 20 filas (v0.5.1)
   obtenerVistaTabla: (nombreTabla) => ipcRenderer.invoke('datos:obtener-vista-tabla', nombreTabla),
+
+  // Exportación (v0.6)
+  exportarResultadosCSV:  (datos)  => ipcRenderer.invoke('exportar:resultados-csv',  datos),
+  exportarResultadosJSON: (datos)  => ipcRenderer.invoke('exportar:resultados-json', datos),
+  exportarDatasetJSON:    ()       => ipcRenderer.invoke('exportar:dataset-json'),
 });

@@ -31,10 +31,19 @@ Tipos válidos: "texto", "numero", "fecha", "booleano"
 Reglas obligatorias:
 - Los nombres de tabla y columna deben ser en minúsculas con guiones bajos, sin acentos ni caracteres especiales
 - Cada tabla DEBE tener una columna "id" de tipo "numero" como primera columna
-- Si hay relaciones entre tablas (ej: una venta tiene un cliente), usa sufijo "_id" en la columna de referencia
+- Si hay relaciones entre tablas (ej: una venta tiene un cliente), usa sufijo "_id" en la columna de referencia (ej: cliente_id, producto_id)
 - Las filas deben estar entre ${FILAS_MIN} y ${FILAS_MAX}
 - Elige columnas realistas y coherentes con el dominio descrito
-- No uses palabras reservadas SQL como nombre de tabla/columna (order, table, group, select, etc.)`;
+- No uses palabras reservadas SQL como nombre de tabla/columna (order, table, group, select, etc.)
+
+Reglas de riqueza estructural (OBLIGATORIAS):
+- Genera SIEMPRE entre 3 y 6 tablas salvo que el dominio solo tenga sentido con menos
+- Cada tabla debe tener al menos 5 columnas útiles además del id
+- Incluye SIEMPRE tablas de entidades principales Y tablas de relación (ej: ventas + detalle_ventas, pedidos + detalle_pedidos)
+- Modela las entidades más importantes del dominio: clientes, productos, categorías, proveedores, empleados, etc.
+- Si el dominio implica transacciones (ventas, pedidos, reservas, compras), incluye la tabla de transacción Y su tabla de detalle
+- Usa relaciones _id coherentes: si existe tabla "clientes" e "id", la tabla "ventas" debe tener "cliente_id"
+- NO generes una sola tabla mínima; eso no es útil para el usuario`;
 
 /**
  * Interpreta una descripción en lenguaje natural y devuelve un esquema estructurado.

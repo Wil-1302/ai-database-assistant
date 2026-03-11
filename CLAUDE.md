@@ -7,11 +7,13 @@ Guía para Claude Code al trabajar con este repositorio.
 Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
 Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Versión actual: v0.5.1
+## Versión actual: v0.6.0
 
-Generación de datasets desde lenguaje natural: el usuario describe en español el dataset que
-quiere, la IA (Ollama) genera un esquema JSON estructurado, se generan filas falsas con faker
-y el dataset queda disponible para consultas SQL inmediatamente.
+Generación de datasets enriquecida + exportación. El sistema ahora:
+- Detecta el dominio de la descripción (ferretería, hospital, vuelos, escuela, restaurante, etc.)
+- Enriquece el esquema devuelto por la IA con tablas y columnas del dominio cuando el resultado es pobre
+- Garantiza al menos 3–6 tablas relacionadas para dominios conocidos
+- Permite exportar resultados SQL a CSV y JSON, y datasets completos a JSON
 
 ## Comandos
 
@@ -29,14 +31,19 @@ npm install
 ## Estructura de archivos
 
 ```
-main.js          — Proceso principal: ventana, IPC real (carga + esquema + Ollama + SQL + dataset), diálogo nativo
+main.js          — Proceso principal: ventana, IPC real (carga + esquema + Ollama + SQL + dataset + exportación), diálogo nativo
 preload.js       — contextBridge: expone window.api al renderer
-package.json     — Dependencias y scripts (main: "main.js", version: "0.5.0")
+package.json     — Dependencias y scripts (main: "main.js", version: "0.6.0")
 
 src/
   datasets/
-    interpretador-esquema.js — Interpreta descripción en español → esquema JSON (via Ollama)
-    generador-filas.js       — Genera filas faker a partir del esquema; resuelve relaciones _id
+    interpretador-esquema.js  — Interpreta descripción en español → esquema JSON (via Ollama)
+    generador-filas.js        — Genera filas faker a partir del esquema; resuelve relaciones _id
+    enriquecedor-esquema.js   — Enriquece el esquema con heurísticas de dominio (v0.6)
+
+  exportador/
+    exportar-csv.js   — Genera y escribe archivos CSV (RFC 4180, BOM UTF-8) (v0.6)
+    exportar-json.js  — Exporta resultados SQL y datasets completos a JSON (v0.6)
 
   db/
     ejecutor-sql.js    — Crea DB SQLite en memoria, inserta datos y ejecuta consultas (v0.4)
@@ -46,15 +53,15 @@ src/
     generador-sql.js   — Construye prompt con esquema, llama a Ollama, parsea SQL + explicación
 
   ui/
-    index.html   — Layout 3 paneles (esquema | chat | resultados) + modal generar dataset, v0.5
-    renderer.js  — UI: temas, chat, carga de archivos, árbol de esquema, tabla resultados, modal dataset
-    styles.css   — Temas claro/oscuro + árbol + notificaciones + tabla + modal dataset
+    index.html   — Layout 3 paneles (esquema | chat | resultados) + modal generar dataset, v0.6
+    renderer.js  — UI: temas, chat, carga de archivos, árbol de esquema, tabla resultados, modal dataset, exportación
+    styles.css   — Temas claro/oscuro + árbol + notificaciones + tabla + modal dataset + botones exportación
 
   importador/
     detector-esquema.js — Infiere tipos de columna (numero, fecha, booleano, texto)
     lector-csv.js       — Lee CSV con detección automática de separador (,  ;  \t)
     lector-excel.js     — Lee todas las hojas de .xlsx / .xls como tablas
-    lector-sqlite.js    — Stub descriptivo (pendiente v0.6)
+    lector-sqlite.js    — Stub descriptivo (pendiente)
     gestor-datos.js     — Singleton en memoria: orquesta carga, expone esquema y datos completos
 ```
 
@@ -70,8 +77,31 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | `window.api.generarSQL(consulta)`     | `ai:generar-sql`         | ✅ v0.4   |
 | `window.api.verificarOllama()`        | `ai:verificar-ollama`    | ✅ v0.3   |
 | `window.api.ejecutarConsulta(sql)`    | `db:ejecutar-consulta`   | ✅ v0.4   |
-| `window.api.generarDataset(desc, n)`   | `datos:generar-dataset`  | ✅ v0.5.1 |
-| `window.api.obtenerVistaTabla(nombre)` | `datos:obtener-vista-tabla` | ✅ v0.5.1 |
+| `window.api.generarDataset(desc, n)`      | `datos:generar-dataset`      | ✅ v0.5.1 |
+| `window.api.obtenerVistaTabla(nombre)`    | `datos:obtener-vista-tabla`  | ✅ v0.5.1 |
+| `window.api.exportarResultadosCSV(datos)` | `exportar:resultados-csv`    | ✅ v0.6   |
+| `window.api.exportarResultadosJSON(datos)`| `exportar:resultados-json`   | ✅ v0.6   |
+| `window.api.exportarDatasetJSON()`        | `exportar:dataset-json`      | ✅ v0.6   |
+
+## Módulo Enriquecedor de esquema (v0.6)
+
+### enriquecedor-esquema.js
+- `enriquecerEsquema(esquema, descripcion)` → esquema enriquecido con tablas y columnas adicionales
+- `detectarDominio(descripcion)` → detecta dominio (ferreteria, tienda, vuelo, hospital, restaurante, escuela, empresa)
+- `pideMasRiqueza(descripcion)` → true si el usuario pidió "completo", "más tablas", etc.
+- Plantillas de 7 dominios con tablas y columnas típicas
+- Amplía columnas de tablas existentes si tienen < 3 columnas útiles
+- Añade tablas faltantes del dominio si hay < 3 tablas o el usuario pide más riqueza
+
+## Módulo Exportador (v0.6)
+
+### exportar-csv.js
+- `exportarCSV(ruta, columnas, filas)` → escribe CSV con BOM UTF-8 (compatible con Excel)
+- Formato RFC 4180: valores con coma/comilla/salto de línea rodeados con comillas dobles
+
+### exportar-json.js
+- `exportarResultadosJSON(ruta, filas)` → array de filas como JSON formateado
+- `exportarDatasetJSON(ruta, tablas)` → objeto `{ nombre_tabla: [...filas] }` como JSON
 
 ## Módulo Datasets (v0.5)
 
@@ -156,4 +186,5 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | **v0.4** ✅ | Ejecución SQL con better-sqlite3 en memoria, tabla de resultados en UI |
 | **v0.5** ✅ | Generación de datasets desde lenguaje natural: Ollama + faker + modal UI |
 | **v0.5.1** ✅ | Refinamiento UX: vista previa de tabla, selector de filas, botón regenerar, resumen dataset |
-| v0.6 | Exportación de resultados, historial de consultas, pulido UX |
+| **v0.6** ✅ | Generación de datasets enriquecida (heurísticas de dominio) + exportación CSV/JSON |
+| v0.7 | Historial de consultas, pulido UX, soporte SQLite real |
