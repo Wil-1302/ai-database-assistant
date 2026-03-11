@@ -144,22 +144,29 @@ function detectarDominio(descripcion) {
 }
 
 /**
- * Detecta si la descripción contiene señales de que el usuario pide más riqueza:
- * "completo", "más tablas", "más atributos", "más clases", etc.
+ * Detecta si la descripción contiene señales de que el usuario pide más riqueza.
+ * También considera que una descripción larga implica que el usuario quiere algo complejo.
  */
 function pideMasRiqueza(descripcion) {
   const desc = norm(descripcion);
-  return /completo|mas tabla|mas atributo|mas clas|mas relacion|rico|detallado|amplio|exhaustivo|extendido/.test(desc);
+  const tieneKeywords = /completo|mas tabla|mas atributo|mas clas|mas relacion|rico|detallado|amplio|exhaustivo|extendido|todos los campos|muchos campos|con todo|bien estructurado/.test(desc);
+  // Una descripción > 100 caracteres es señal de que el usuario quiere algo complejo
+  const descripcionLarga = descripcion.trim().length > 100;
+  return tieneKeywords || descripcionLarga;
 }
 
 /**
  * Busca la tabla de la plantilla de dominio que mejor coincide con el nombre dado.
+ * Usa igualdad exacta y variantes de pluralización simples para evitar falsos positivos
+ * como emparejar "ventas" con "detalle_ventas" por substring.
  */
 function buscarEnPlantilla(nombreTabla, tablasPlantilla) {
   const n = norm(nombreTabla);
   return tablasPlantilla.find((pt) => {
     const pn = norm(pt.nombre);
-    return pn === n || pn.includes(n) || n.includes(pn);
+    return pn === n ||
+      pn === n + 's' || pn === n + 'es' ||
+      n === pn + 's' || n === pn + 'es';
   });
 }
 
@@ -234,15 +241,24 @@ function enriquecerEsquema(esquema, descripcion) {
   }
 
   // ── Paso 2: añadir tablas faltantes del dominio cuando procede ──
-  const pocasTablas = esquema.tablas.length < 3;
+  // Se consideran "pocas tablas" si el esquema tiene menos que la plantilla del dominio
+  const pocasTablas = dominio
+    ? esquema.tablas.length < dominio.tablas.length
+    : esquema.tablas.length < 3;
   if (dominio && (pocasTablas || quiereMasRiqueza)) {
     const filasPorDefecto = esquema.tablas[0]?.filas || 50;
     const nombresExistentes = new Set(esquema.tablas.map((t) => norm(t.nombre)));
 
     for (const plantillaTabla of dominio.tablas) {
       const pn = norm(plantillaTabla.nombre);
-      // Verificar que no exista ya una tabla similar
-      const yaExiste = [...nombresExistentes].some((n) => n === pn || n.includes(pn) || pn.includes(n));
+      // Verificar que no exista ya una tabla con el mismo nombre o variante plural simple.
+      // Se usa igualdad exacta + pluralización para evitar falsos positivos como
+      // "ventas".includes("detalle_ventas") que bloquearía añadir tablas compuestas.
+      const yaExiste = [...nombresExistentes].some((n) =>
+        n === pn ||
+        n === pn + 's' || n === pn + 'es' ||
+        pn === n + 's' || pn === n + 'es'
+      );
       if (!yaExiste) {
         esquema.tablas.push({
           nombre:   plantillaTabla.nombre,

@@ -7,13 +7,15 @@ Guía para Claude Code al trabajar con este repositorio.
 Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
 Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Versión actual: v0.6.0
+## Versión actual: v0.6.1
 
-Generación de datasets enriquecida + exportación. El sistema ahora:
-- Detecta el dominio de la descripción (ferretería, hospital, vuelos, escuela, restaurante, etc.)
-- Enriquece el esquema devuelto por la IA con tablas y columnas del dominio cuando el resultado es pobre
-- Garantiza al menos 3–6 tablas relacionadas para dominios conocidos
-- Permite exportar resultados SQL a CSV y JSON, y datasets completos a JSON
+Reparación, endurecimiento y mejora de calidad. Cambios sobre v0.6.0:
+- Campo de descripción del modal ampliado: sin límite de caracteres, auto-resize, contador visible
+- `pideMasRiqueza` activa enriquecimiento también cuando la descripción supera 100 caracteres
+- Umbral de tablas en `enriquecerEsquema` ahora compara contra el tamaño de la plantilla del dominio (no fijo en < 3)
+- Sort topológico real en `ordenarPorDependencias` (algoritmo de Kahn) para dependencias de N niveles
+- Etiqueta del dataset truncada en la última palabra completa (sin cortar a mitad de palabra)
+- `console.warn` explícito cuando una foreign key no se puede resolver en generador de filas
 
 ## Comandos
 
@@ -187,4 +189,5 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | **v0.5** ✅ | Generación de datasets desde lenguaje natural: Ollama + faker + modal UI |
 | **v0.5.1** ✅ | Refinamiento UX: vista previa de tabla, selector de filas, botón regenerar, resumen dataset |
 | **v0.6** ✅ | Generación de datasets enriquecida (heurísticas de dominio) + exportación CSV/JSON |
+| **v0.6.1** ✅ | Reparación y endurecimiento: textarea sin límite, sort topológico, enriquecedor más agresivo |
 | v0.7 | Historial de consultas, pulido UX, soporte SQLite real |

@@ -1091,8 +1091,10 @@ html, body {
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-borde-grande);
   padding: 28px 32px;
-  width: 520px;
-  max-width: 90vw;
+  width: 560px;
+  max-width: 92vw;
+  max-height: 88vh;
+  overflow-y: auto;
   box-shadow: var(--sombra-elevada);
   animation: slideUpModal 0.18s ease;
 }
@@ -1127,13 +1129,28 @@ html, body {
   resize: vertical;
   font-family: inherit;
   line-height: 1.5;
+  min-height: 96px;
+  max-height: 260px;
+  overflow-y: auto;
   transition: border-color 0.15s ease;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .modal-textarea:focus {
   outline: none;
   border-color: var(--color-acento);
+}
+
+.modal-contador {
+  font-size: 11px;
+  color: var(--color-texto-suave);
+  text-align: right;
+  margin-bottom: 10px;
+  transition: color 0.15s ease;
+}
+
+.modal-contador--largo {
+  color: var(--color-advertencia);
 }
 
 .modal-ejemplos {

@@ -51,24 +51,59 @@ function generarTablasDesdeEsquema(esquema) {
 // -----------------------------------------------
 
 /**
- * Pone primero las tablas que no dependen de otras,
- * para que las _id se puedan resolver correctamente.
+ * Ordena tablas topológicamente: las tablas referenciadas por _id van primero.
+ * Usa Kahn's algorithm para un sort topológico real que maneja cadenas de N niveles.
+ * Si hay ciclos (raro pero posible), los nodos del ciclo se añaden al final.
  */
 function ordenarPorDependencias(tablas) {
-  const nombres = new Set(tablas.map((t) => t.nombre));
-  const sinDeps = [];
-  const conDeps = [];
+  const nombres = tablas.map((t) => t.nombre);
+  const indice  = new Map(tablas.map((t, i) => [t.nombre, i]));
+
+  // Construir grafo de dependencias: tabla → set de tablas de las que depende
+  const deps = new Map(tablas.map((t) => [t.nombre, new Set()]));
 
   for (const tabla of tablas) {
-    const tieneDep = tabla.columnas.some((col) => {
-      if (!col.nombre.endsWith('_id')) return false;
+    for (const col of tabla.columnas) {
+      if (!col.nombre.endsWith('_id')) continue;
       const ref = col.nombre.slice(0, -3);
-      return nombres.has(ref) || nombres.has(ref + 's') || nombres.has(ref + 'es');
-    });
-    (tieneDep ? conDeps : sinDeps).push(tabla);
+      // Buscar tabla referenciada (igual, plural con s, plural con es, o raíz sin s)
+      const candidatos = [ref, ref + 's', ref + 'es'];
+      for (const candidato of candidatos) {
+        if (nombres.includes(candidato) && candidato !== tabla.nombre) {
+          deps.get(tabla.nombre).add(candidato);
+          break;
+        }
+      }
+    }
   }
 
-  return [...sinDeps, ...conDeps];
+  // Kahn's algorithm: grado de entrada = número de tablas de las que depende esta
+  const gradoEntrada = new Map(tablas.map((t) => [t.nombre, deps.get(t.nombre).size]));
+  const cola = tablas.filter((t) => gradoEntrada.get(t.nombre) === 0).map((t) => t.nombre);
+  const resultado = [];
+
+  while (cola.length > 0) {
+    const actual = cola.shift();
+    resultado.push(tablas[indice.get(actual)]);
+    // Reducir grado de entrada de las tablas que dependen de ésta
+    for (const tabla of tablas) {
+      if (deps.get(tabla.nombre).has(actual)) {
+        const nuevo = gradoEntrada.get(tabla.nombre) - 1;
+        gradoEntrada.set(tabla.nombre, nuevo);
+        if (nuevo === 0) cola.push(tabla.nombre);
+      }
+    }
+  }
+
+  // Si quedaron tablas (ciclo), añadirlas al final en orden original
+  if (resultado.length < tablas.length) {
+    const procesadas = new Set(resultado.map((t) => t.nombre));
+    for (const tabla of tablas) {
+      if (!procesadas.has(tabla.nombre)) resultado.push(tabla);
+    }
+  }
+
+  return resultado;
 }
 
 // -----------------------------------------------
@@ -116,6 +151,8 @@ function resolverIdForaneo(nombreCol, tablasGeneradas) {
   if (tablaRef && tablaRef.filas.length > 0) {
     return faker.number.int({ min: 1, max: tablaRef.filas.length });
   }
+  // Fallback: la tabla referenciada no se ha generado todavía o no existe
+  console.warn(`[generador-filas] FK no resuelta para "${nombreCol}" (referencia "${ref}" no encontrada). Usando rango genérico.`);
   return faker.number.int({ min: 1, max: 50 });
 }
 

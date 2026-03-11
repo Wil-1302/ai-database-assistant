@@ -597,8 +597,9 @@ const modalFilasPorTabla = document.getElementById('modalFilasPorTabla');
 /** Abre el modal. Si hay última descripción, precarga el campo. */
 function abrirModalDataset() {
   modalDescripcion.value = ultimaDescripcionDataset || '';
-  modalConfirmar.disabled = (modalDescripcion.value.trim().length < 5);
   modalDataset.classList.remove('oculto');
+  // Recalcular altura y contador (especialmente si hay texto pre-rellenado)
+  actualizarModalTextarea();
   modalDescripcion.focus();
 }
 
@@ -607,10 +608,20 @@ function cerrarModalDataset() {
   modalDataset.classList.add('oculto');
 }
 
-// Habilitar/deshabilitar botón Generar según texto
-modalDescripcion.addEventListener('input', () => {
+// Auto-resize + contador de caracteres del textarea del modal
+const modalContador = document.getElementById('modalContador');
+
+function actualizarModalTextarea() {
+  const len = modalDescripcion.value.length;
+  modalDescripcion.style.height = 'auto';
+  modalDescripcion.style.height = Math.min(modalDescripcion.scrollHeight, 260) + 'px';
+  const texto = len === 1 ? '1 carácter' : `${len} caracteres`;
+  modalContador.textContent = texto;
+  modalContador.classList.toggle('modal-contador--largo', len > 600);
   modalConfirmar.disabled = modalDescripcion.value.trim().length < 5;
-});
+}
+
+modalDescripcion.addEventListener('input', actualizarModalTextarea);
 
 // Cerrar con Escape
 modalDataset.addEventListener('keydown', (e) => {

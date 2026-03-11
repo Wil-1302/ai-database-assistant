@@ -305,8 +305,12 @@ ipcMain.handle('datos:generar-dataset', async (_evento, descripcion, filasPorTab
     return { ok: false, error: `Error al generar datos: ${err.message}` };
   }
 
-  // Extraer una etiqueta legible de la descripción (primeras 40 chars)
-  const etiqueta = descripcion.trim().slice(0, 40);
+  // Extraer una etiqueta legible de la descripción: hasta 50 chars, sin cortar palabras
+  const MAX_ETIQUETA = 50;
+  const descTrim = descripcion.trim();
+  const etiqueta = descTrim.length <= MAX_ETIQUETA
+    ? descTrim
+    : descTrim.slice(0, MAX_ETIQUETA).replace(/\s+\S*$/, '') + '…';
 
   // Cargar en el gestor de datos (reemplaza datos previos)
   gestor.cargarDataset(tablasGeneradas, etiqueta);
