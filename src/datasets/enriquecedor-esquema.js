@@ -631,6 +631,10 @@ function enriquecerEsquema(esquema, descripcion) {
     enriquecimientoGenerico(esquema);
   }
 
+  // Adjuntar el dominio detectado al esquema para que el generador de filas
+  // pueda usar catálogos semánticos del dominio correcto y evitar contaminación.
+  esquema._dominio = dominio ? dominio.nombre : null;
+
   return esquema;
 }
 

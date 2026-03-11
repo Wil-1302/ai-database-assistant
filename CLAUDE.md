@@ -7,18 +7,26 @@ Guía para Claude Code al trabajar con este repositorio.
 Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
 Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Versión actual: v0.6.3
+## Versión actual: v0.6.4
 
-Generalización a nuevos dominios, base/extra split y fallback genérico. Cambios sobre v0.6.2:
-- 8 nuevos dominios: farmacia, banco, universidad, fabrica, prision, mineria, logistica, turismo (total: 15)
-- Cada dominio dividido en `tablas_base` (por defecto, 4-6 tablas) y `tablas_extra` (solo con masRiqueza)
-- Hospital: base=6 tablas, extra=3 (salas/enfermedades/recetas). Antes: siempre 9 tablas
-- `detectarDominio` ahora usa puntuación por matches (mejor vs. peor keyword match), no primer match
-- Dominio 'empresa' ya no captura 'empleado' para evitar colisión con minería/fábrica/prisión
-- Paso 1 de enriquecimiento: aplica plantilla de dominio SIEMPRE cuando hay match (no solo si pocas col.)
-- `enriquecimientoGenerico()`: para dominios no reconocidos, resuelve _id colgantes (crea tabla mínima referenciada) y añade tabla de detalle si hay tabla de transacciones sin ella
-- Catálogos nuevos: delitos, cargos_minería, minerales, rangos_guardia, tipos_cuenta, tipos_transacción, tipos_habitación, estados_envío, etc.
-- Lookups semánticos para: prisión, minería, banco, logística, turismo, fábrica, universidad
+Corrección de contaminación semántica y NL→SQL de nivel senior. Cambios sobre v0.6.3:
+
+**Contaminación semántica corregida:**
+- `enriquecerEsquema` adjunta `esquema._dominio` al esquema resultante
+- `generarTablasDesdeEsquema` lee `_dominio` y lo propaga por toda la cadena
+- `obtenerGeneradorSemantico(tabla, columna, dominio)` ahora recibe el dominio activo
+- `categorias.nombre` → usa `CAT.categorias_farmacia` en farmacia, `CAT.categorias_restaurante` en restaurante, `CAT.categorias_comercio_general` en otros (NO siempre ferretería)
+- `nombre_producto` en farmacia → medicamentos reales; en restaurante → platos; en ferretería → productos de hardware
+- `proveedores.nombre_empresa` en farmacia → laboratorios y distribuidores farmacéuticos reales
+- Nuevos catálogos: `CAT.categorias_farmacia` (15 categorías farmacéuticas reales), `CAT.proveedores_farmaceuticos`, `CAT.categorias_comercio_general`
+
+**NL→SQL de nivel ingeniero senior:**
+- `INSTRUCCION_SISTEMA` completamente reescrita con patrón "ingeniero senior de SQL"
+- Tabla de patrones NL→SQL: "más vendido", "top 5", "por mes", "promedio", "más frecuente", "más recetado"
+- Sección de razonamiento con ejemplo concreto: "medicamento más vendido" → JOIN + GROUP BY + SUM + DESC LIMIT 1
+- Plantilla para doctores, cursos, clientes, productos, empleados
+- `formatearEsquema` enriquecida: cada columna _id anotada con `[FK → "tabla".id]`, sección RELACIONES con JOINs disponibles, sección CONSEJOS con columnas clave de tablas de detalle
+- El modelo ahora recibe el mapa completo de relaciones y no necesita inferir los JOINs
 
 ## Comandos
 
@@ -196,4 +204,5 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | **v0.6.1** ✅ | Reparación y endurecimiento: textarea sin límite, sort topológico, enriquecedor más agresivo |
 | **v0.6.2** ✅ | Calidad semántica: catálogos reales, hospital 9 tablas, aeropuertos coherentes, generación table-aware |
 | **v0.6.3** ✅ | 15 dominios, base/extra split, enriquecimientoGenerico(), detección por puntuación, farmacia/banco/prisión/minería/universidad/logística/turismo/fábrica |
+| **v0.6.4** ✅ | Contaminación semántica corregida (dominio propagado por cadena de generación); NL→SQL de nivel senior con FK annotations, relaciones explícitas y patrones NL→SQL |
 | v0.7 | Historial de consultas, pulido UX, soporte SQLite real |

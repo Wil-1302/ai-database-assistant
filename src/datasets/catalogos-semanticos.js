@@ -99,6 +99,40 @@ const CAT = {
     '5 días', '7 días', '10 días', '14 días', '21 días', '30 días', 'Indefinido',
   ],
 
+  // ── Farmacia ──────────────────────────────────────────────
+  categorias_farmacia: [
+    'Analgésicos y antiinflamatorios',
+    'Antibióticos y antimicrobianos',
+    'Vitaminas y suplementos',
+    'Antihipertensivos y cardiovascular',
+    'Antidiabéticos y metabolismo',
+    'Antiácidos y digestivos',
+    'Antihistamínicos y alergias',
+    'Dermatología y cicatrizantes',
+    'Pediátrico y neonatal',
+    'Oncología y quimioterapia',
+    'Neurología y psiquiatría',
+    'Oftalmología y ORL',
+    'Respiratorio y broncodilatadores',
+    'Material médico y apósitos',
+    'Cuidado personal y parafarmacia',
+  ],
+  proveedores_farmaceuticos: [
+    'Pfizer Distribución S.A.', 'Bayer HealthCare Perú', 'Roche Pharma',
+    'Abbott Laboratories', 'Novartis Pharma', 'MSD Perú S.A.',
+    'Sanofi-Aventis', 'AstraZeneca Peru', 'GlaxoSmithKline',
+    'Boehringer Ingelheim', 'Genomma Lab Industrial', 'Farmaindustria S.A.C.',
+    'IQFARMA', 'Corporación Medco', 'Laboratorios Portugal',
+  ],
+
+  // ── Comercio genérico (cuando el dominio no es ferretería específica) ──
+  categorias_comercio_general: [
+    'Electrónica y tecnología', 'Ropa y calzado', 'Alimentación y bebidas',
+    'Hogar y decoración', 'Deportes y fitness', 'Juguetes e infantil',
+    'Libros y papelería', 'Automotriz', 'Salud y belleza',
+    'Mascotas', 'Artículos de oficina', 'Muebles y jardín',
+  ],
+
   // ── Ferretería / Comercio ─────────────────────────────────
   categorias_ferreteria: [
     'Herramientas manuales', 'Herramientas eléctricas', 'Tornillería y fijaciones',
@@ -280,7 +314,7 @@ const aleatorio = (fn) => () => fn();
 // -----------------------------------------------
 
 /**
- * Devuelve un generador semántico específico para la combinación (tabla, columna),
+ * Devuelve un generador semántico específico para la combinación (tabla, columna, dominio),
  * o null si no hay un generador específico para ese par.
  *
  * El generador devuelto tiene la firma: (indice: number) => any
@@ -290,11 +324,13 @@ const aleatorio = (fn) => () => fn();
  *
  * @param {string} nombreTabla
  * @param {string} nombreColumna
+ * @param {string|null} dominio - Dominio detectado (farmacia, hospital, tienda, etc.)
  * @returns {((indice: number) => any) | null}
  */
-function obtenerGeneradorSemantico(nombreTabla, nombreColumna) {
+function obtenerGeneradorSemantico(nombreTabla, nombreColumna, dominio) {
   const t = nombreTabla.toLowerCase();
   const c = nombreColumna.toLowerCase();
+  const d = (dominio || '').toLowerCase();
 
   // ── HOSPITAL / SALUD ─────────────────────────────────────────────────
 
@@ -366,14 +402,36 @@ function obtenerGeneradorSemantico(nombreTabla, nombreColumna) {
   if (/grupo_sanguineo|tipo_sangre/.test(c))
     return aleatorio(() => azar(CAT.grupos_sanguineos));
 
-  // ── FERRETERÍA / COMERCIO ────────────────────────────────────────────
+  // ── FERRETERÍA / COMERCIO (domain-aware para evitar contaminación) ──
 
-  // Nombre de producto en tabla productos
-  if (c === 'nombre_producto') return aleatorio(() => azar(CAT.productos_ferreteria));
+  // Nombre de producto: depende del dominio activo
+  if (c === 'nombre_producto') {
+    if (d === 'farmacia')
+      return aleatorio(() => azar(CAT.medicamentos));
+    if (d === 'restaurante')
+      return aleatorio(() => azar(CAT.platos));
+    // ferreteria, tienda u otros → productos físicos
+    return aleatorio(() => azar(CAT.productos_ferreteria));
+  }
 
-  // Columna "nombre" en tabla categorias → categorías de ferretería/tienda
-  if (/^categoria/.test(t) && /^nombre$/.test(c))
-    return aleatorio(() => azar(CAT.categorias_ferreteria));
+  // Columna "nombre" en tabla categorias → domain-aware (evita mezcla de dominios)
+  if (/^categoria/.test(t) && /^nombre$/.test(c)) {
+    if (d === 'farmacia')
+      return aleatorio(() => azar(CAT.categorias_farmacia));
+    if (d === 'restaurante')
+      return aleatorio(() => azar(CAT.categorias_restaurante));
+    if (d === 'ferreteria')
+      return aleatorio(() => azar(CAT.categorias_ferreteria));
+    // tienda, supermercado u otro comercio → categorías genéricas
+    return aleatorio(() => azar(CAT.categorias_comercio_general));
+  }
+
+  // Proveedor en tabla proveedores: domain-aware
+  if (/^proveedor/.test(t) && /nombre_empresa|^nombre$/.test(c)) {
+    if (d === 'farmacia')
+      return aleatorio(() => azar(CAT.proveedores_farmaceuticos));
+    return aleatorio(() => faker.company.name());
+  }
 
   // Unidad de medida
   if (/^unidad$|unidad_medida/.test(c))

@@ -23,10 +23,12 @@ const { obtenerGeneradorSemantico } = require('./catalogos-semanticos');
  */
 function generarTablasDesdeEsquema(esquema) {
   const tablasOrdenadas = ordenarPorDependencias(esquema.tablas);
+  // Dominio detectado por el enriquecedor — evita contaminación semántica entre dominios
+  const dominio = esquema._dominio || null;
   const resultado = [];
 
   for (const tablaEsquema of tablasOrdenadas) {
-    const filas = generarFilas(tablaEsquema, resultado);
+    const filas = generarFilas(tablaEsquema, resultado, dominio);
 
     // Extraer muestra de valores (hasta 3 por columna, para el árbol de esquema de la UI)
     const columnas = tablaEsquema.columnas.map((col) => {
@@ -112,12 +114,12 @@ function ordenarPorDependencias(tablas) {
 // Generación de filas para una tabla
 // -----------------------------------------------
 
-function generarFilas(tablaEsquema, tablasYaGeneradas) {
+function generarFilas(tablaEsquema, tablasYaGeneradas, dominio) {
   const filas = [];
   for (let i = 0; i < tablaEsquema.filas; i++) {
     const fila = {};
     for (const col of tablaEsquema.columnas) {
-      fila[col.nombre] = generarValor(col.nombre, col.tipo, i, tablasYaGeneradas, tablaEsquema.nombre);
+      fila[col.nombre] = generarValor(col.nombre, col.tipo, i, tablasYaGeneradas, tablaEsquema.nombre, dominio);
     }
     filas.push(fila);
   }
@@ -139,7 +141,7 @@ function generarFilas(tablaEsquema, tablasYaGeneradas) {
  *   5. Tipo numero → generadores genéricos por patrón de nombre
  *   6. Tipo texto → generadores genéricos por patrón de nombre
  */
-function generarValor(nombre, tipo, indice, tablasGeneradas, nombreTabla) {
+function generarValor(nombre, tipo, indice, tablasGeneradas, nombreTabla, dominio) {
   const n = nombre.toLowerCase();
 
   // 1. ID propio → siempre secuencial
@@ -148,8 +150,8 @@ function generarValor(nombre, tipo, indice, tablasGeneradas, nombreTabla) {
   // 2. Referencia foránea → resolver contra tabla ya generada
   if (n.endsWith('_id')) return resolverIdForaneo(n, tablasGeneradas);
 
-  // 3. Generador semántico específico por (tabla, columna)
-  const genSemantico = obtenerGeneradorSemantico(nombreTabla, n);
+  // 3. Generador semántico específico por (tabla, columna, dominio)
+  const genSemantico = obtenerGeneradorSemantico(nombreTabla, n, dominio);
   if (genSemantico !== null) return genSemantico(indice);
 
   // 4–6. Fallback: generadores genéricos por tipo y patrón de nombre
