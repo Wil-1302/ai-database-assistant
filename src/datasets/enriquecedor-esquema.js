@@ -57,11 +57,50 @@ const DOMINIOS = [
     nombre: 'hospital',
     keywords: ['hospital', 'clinica', 'medico', 'salud', 'paciente', 'doctor', 'enfermera', 'farmacia', 'ambulatorio'],
     tablas: [
-      { nombre: 'especialidades', columnas: [{ nombre: 'id', tipo: 'numero' }, { nombre: 'nombre', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }] },
-      { nombre: 'doctores',       columnas: [{ nombre: 'id', tipo: 'numero' }, { nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }, { nombre: 'especialidad_id', tipo: 'numero' }, { nombre: 'matricula', tipo: 'texto' }] },
-      { nombre: 'pacientes',      columnas: [{ nombre: 'id', tipo: 'numero' }, { nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'fecha_nacimiento', tipo: 'fecha' }, { nombre: 'telefono', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'direccion', tipo: 'texto' }] },
-      { nombre: 'citas',          columnas: [{ nombre: 'id', tipo: 'numero' }, { nombre: 'paciente_id', tipo: 'numero' }, { nombre: 'doctor_id', tipo: 'numero' }, { nombre: 'fecha', tipo: 'fecha' }, { nombre: 'diagnostico', tipo: 'texto' }, { nombre: 'estado', tipo: 'texto' }] },
-      { nombre: 'medicamentos',   columnas: [{ nombre: 'id', tipo: 'numero' }, { nombre: 'nombre', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }, { nombre: 'precio', tipo: 'numero' }, { nombre: 'stock', tipo: 'numero' }] },
+      { nombre: 'especialidades', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'nombre', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' },
+      ]},
+      { nombre: 'salas', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'nombre', tipo: 'texto' }, { nombre: 'area', tipo: 'texto' },
+        { nombre: 'piso', tipo: 'numero' }, { nombre: 'capacidad', tipo: 'numero' },
+      ]},
+      { nombre: 'medicamentos', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'nombre', tipo: 'texto' }, { nombre: 'principio_activo', tipo: 'texto' },
+        { nombre: 'laboratorio', tipo: 'texto' }, { nombre: 'presentacion', tipo: 'texto' },
+        { nombre: 'precio', tipo: 'numero' }, { nombre: 'stock', tipo: 'numero' },
+      ]},
+      { nombre: 'enfermedades', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'nombre', tipo: 'texto' },
+        { nombre: 'categoria', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' },
+      ]},
+      { nombre: 'doctores', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'nombre_completo', tipo: 'texto' },
+        { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' },
+        { nombre: 'especialidad_id', tipo: 'numero' }, { nombre: 'sala_id', tipo: 'numero' },
+        { nombre: 'matricula', tipo: 'texto' },
+      ]},
+      { nombre: 'pacientes', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'nombre_completo', tipo: 'texto' },
+        { nombre: 'fecha_nacimiento', tipo: 'fecha' }, { nombre: 'telefono', tipo: 'texto' },
+        { nombre: 'email', tipo: 'texto' }, { nombre: 'direccion', tipo: 'texto' },
+        { nombre: 'grupo_sanguineo', tipo: 'texto' },
+      ]},
+      { nombre: 'citas', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'paciente_id', tipo: 'numero' },
+        { nombre: 'doctor_id', tipo: 'numero' }, { nombre: 'fecha', tipo: 'fecha' },
+        { nombre: 'motivo', tipo: 'texto' }, { nombre: 'diagnostico', tipo: 'texto' },
+        { nombre: 'estado', tipo: 'texto' },
+      ]},
+      { nombre: 'tratamientos', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'cita_id', tipo: 'numero' },
+        { nombre: 'tipo', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' },
+        { nombre: 'fecha_inicio', tipo: 'fecha' }, { nombre: 'duracion', tipo: 'numero' },
+      ]},
+      { nombre: 'recetas', columnas: [
+        { nombre: 'id', tipo: 'numero' }, { nombre: 'tratamiento_id', tipo: 'numero' },
+        { nombre: 'medicamento_id', tipo: 'numero' }, { nombre: 'dosis', tipo: 'texto' },
+        { nombre: 'frecuencia', tipo: 'texto' }, { nombre: 'duracion', tipo: 'texto' },
+      ]},
     ],
   },
   {
@@ -99,22 +138,35 @@ const DOMINIOS = [
   },
 ];
 
-// Columnas típicas por tipo de tabla (para enriquecimiento genérico)
+// Columnas típicas por tipo de tabla (para enriquecimiento genérico de tablas con pocas columnas)
 const COLUMNAS_TIPICAS = {
-  clientes:    [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }, { nombre: 'ciudad', tipo: 'texto' }],
-  productos:   [{ nombre: 'nombre_producto', tipo: 'texto' }, { nombre: 'precio', tipo: 'numero' }, { nombre: 'stock', tipo: 'numero' }, { nombre: 'descripcion', tipo: 'texto' }],
-  ventas:      [{ nombre: 'fecha', tipo: 'fecha' }, { nombre: 'total', tipo: 'numero' }, { nombre: 'estado', tipo: 'texto' }],
-  pedidos:     [{ nombre: 'fecha', tipo: 'fecha' }, { nombre: 'total', tipo: 'numero' }, { nombre: 'estado', tipo: 'texto' }],
-  categorias:  [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }],
-  proveedores: [{ nombre: 'nombre_empresa', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }],
-  empleados:   [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'cargo', tipo: 'texto' }, { nombre: 'salario', tipo: 'numero' }],
-  doctores:    [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }],
-  pacientes:   [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }, { nombre: 'fecha_nacimiento', tipo: 'fecha' }],
-  alumnos:     [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }],
-  profesores:  [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }],
-  pasajeros:   [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }],
-  vuelos:      [{ nombre: 'numero_vuelo', tipo: 'texto' }, { nombre: 'fecha_salida', tipo: 'fecha' }, { nombre: 'estado', tipo: 'texto' }],
-  boletos:     [{ nombre: 'clase', tipo: 'texto' }, { nombre: 'precio', tipo: 'numero' }, { nombre: 'fecha_compra', tipo: 'fecha' }],
+  clientes:      [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }, { nombre: 'ciudad', tipo: 'texto' }],
+  productos:     [{ nombre: 'nombre_producto', tipo: 'texto' }, { nombre: 'precio', tipo: 'numero' }, { nombre: 'stock', tipo: 'numero' }, { nombre: 'descripcion', tipo: 'texto' }],
+  ventas:        [{ nombre: 'fecha', tipo: 'fecha' }, { nombre: 'total', tipo: 'numero' }, { nombre: 'estado', tipo: 'texto' }],
+  pedidos:       [{ nombre: 'fecha', tipo: 'fecha' }, { nombre: 'total', tipo: 'numero' }, { nombre: 'estado', tipo: 'texto' }],
+  categorias:    [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }],
+  proveedores:   [{ nombre: 'nombre_empresa', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }],
+  empleados:     [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'cargo', tipo: 'texto' }, { nombre: 'salario', tipo: 'numero' }],
+  doctores:      [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }],
+  pacientes:     [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }, { nombre: 'fecha_nacimiento', tipo: 'fecha' }],
+  alumnos:       [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }],
+  profesores:    [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }],
+  pasajeros:     [{ nombre: 'nombre_completo', tipo: 'texto' }, { nombre: 'email', tipo: 'texto' }, { nombre: 'telefono', tipo: 'texto' }],
+  vuelos:        [{ nombre: 'numero_vuelo', tipo: 'texto' }, { nombre: 'fecha_salida', tipo: 'fecha' }, { nombre: 'estado', tipo: 'texto' }],
+  boletos:       [{ nombre: 'clase', tipo: 'texto' }, { nombre: 'precio', tipo: 'numero' }, { nombre: 'fecha_compra', tipo: 'fecha' }],
+  medicamentos:  [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'principio_activo', tipo: 'texto' }, { nombre: 'precio', tipo: 'numero' }, { nombre: 'stock', tipo: 'numero' }],
+  especialidades:[{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }],
+  salas:         [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'area', tipo: 'texto' }, { nombre: 'capacidad', tipo: 'numero' }],
+  enfermedades:  [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'categoria', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }],
+  tratamientos:  [{ nombre: 'tipo', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }, { nombre: 'fecha_inicio', tipo: 'fecha' }],
+  recetas:       [{ nombre: 'dosis', tipo: 'texto' }, { nombre: 'frecuencia', tipo: 'texto' }, { nombre: 'duracion', tipo: 'texto' }],
+  citas:         [{ nombre: 'fecha', tipo: 'fecha' }, { nombre: 'motivo', tipo: 'texto' }, { nombre: 'estado', tipo: 'texto' }],
+  platos:        [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'precio', tipo: 'numero' }, { nombre: 'descripcion', tipo: 'texto' }],
+  mesas:         [{ nombre: 'numero_mesa', tipo: 'numero' }, { nombre: 'capacidad', tipo: 'numero' }, { nombre: 'estado', tipo: 'texto' }],
+  cursos:        [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }, { nombre: 'creditos', tipo: 'numero' }],
+  notas:         [{ nombre: 'nota', tipo: 'numero' }, { nombre: 'tipo', tipo: 'texto' }, { nombre: 'fecha', tipo: 'fecha' }],
+  departamentos: [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'descripcion', tipo: 'texto' }],
+  proyectos:     [{ nombre: 'nombre', tipo: 'texto' }, { nombre: 'estado', tipo: 'texto' }, { nombre: 'fecha_inicio', tipo: 'fecha' }],
 };
 
 // -----------------------------------------------

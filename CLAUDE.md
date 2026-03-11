@@ -7,15 +7,19 @@ Guía para Claude Code al trabajar con este repositorio.
 Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
 Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Versión actual: v0.6.1
+## Versión actual: v0.6.2
 
-Reparación, endurecimiento y mejora de calidad. Cambios sobre v0.6.0:
-- Campo de descripción del modal ampliado: sin límite de caracteres, auto-resize, contador visible
-- `pideMasRiqueza` activa enriquecimiento también cuando la descripción supera 100 caracteres
-- Umbral de tablas en `enriquecerEsquema` ahora compara contra el tamaño de la plantilla del dominio (no fijo en < 3)
-- Sort topológico real en `ordenarPorDependencias` (algoritmo de Kahn) para dependencias de N niveles
-- Etiqueta del dataset truncada en la última palabra completa (sin cortar a mitad de palabra)
-- `console.warn` explícito cuando una foreign key no se puede resolver en generador de filas
+Calidad semántica drásticamente mejorada. Cambios sobre v0.6.1:
+- Nuevo módulo `src/datasets/catalogos-semanticos.js` con catálogos reales por dominio y función `obtenerGeneradorSemantico(tabla, columna)` que retorna un generador con firma `(indice) => valor`
+- Hospital expandido: 9 tablas con cadena relacional completa (especialidades → salas → doctores → pacientes → citas → tratamientos → recetas → medicamentos + enfermedades)
+- Datos semánticamente correctos: medicamentos con nombre real + principio activo + laboratorio + presentación; especialidades médicas reales; salas de hospital reales; enfermedades reales; tipos de tratamiento y recetas con dosis/frecuencia reales
+- Aeropuertos consistentes por fila: ciudad/pais/aeropuerto/codigo_iata son coherentes entre sí
+- Vuelos: número de vuelo con código de aerolínea real; estados realistas; clases de vuelo correctas
+- Restaurante: nombres reales de platos, estados de mesa contextual, capacidades
+- Escuela: nombres reales de materias, notas en escala 0–20, tipos de evaluación
+- Empresa: cargos y departamentos reales
+- Generador de filas pasa `nombreTabla` por toda la cadena para que el lookup sea table-aware
+- El patrón genérico `/nombre/` ya no captura columnas de dominio (medicamentos.nombre, salas.nombre, etc.)
 
 ## Comandos
 
@@ -40,8 +44,9 @@ package.json     — Dependencias y scripts (main: "main.js", version: "0.6.0")
 src/
   datasets/
     interpretador-esquema.js  — Interpreta descripción en español → esquema JSON (via Ollama)
-    generador-filas.js        — Genera filas faker a partir del esquema; resuelve relaciones _id
-    enriquecedor-esquema.js   — Enriquece el esquema con heurísticas de dominio (v0.6)
+    generador-filas.js        — Genera filas faker a partir del esquema; resuelve relaciones _id; usa catalogos-semanticos (v0.6.2)
+    enriquecedor-esquema.js   — Enriquece el esquema con heurísticas de dominio (v0.6); hospital 9 tablas (v0.6.2)
+    catalogos-semanticos.js   — Catálogos reales por dominio + obtenerGeneradorSemantico(tabla, columna) → (i)=>valor (v0.6.2)
 
   exportador/
     exportar-csv.js   — Genera y escribe archivos CSV (RFC 4180, BOM UTF-8) (v0.6)
@@ -190,4 +195,5 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | **v0.5.1** ✅ | Refinamiento UX: vista previa de tabla, selector de filas, botón regenerar, resumen dataset |
 | **v0.6** ✅ | Generación de datasets enriquecida (heurísticas de dominio) + exportación CSV/JSON |
 | **v0.6.1** ✅ | Reparación y endurecimiento: textarea sin límite, sort topológico, enriquecedor más agresivo |
+| **v0.6.2** ✅ | Calidad semántica: catálogos reales, hospital 9 tablas, aeropuertos coherentes, generación table-aware |
 | v0.7 | Historial de consultas, pulido UX, soporte SQLite real |

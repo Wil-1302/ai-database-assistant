@@ -1,12 +1,14 @@
 'use strict';
 
 // ============================================================
-// Generador de filas falsas con faker — v0.5
+// Generador de filas — v0.6.2
 // A partir de un esquema JSON estructurado, genera filas con
-// datos coherentes y resuelve relaciones por sufijo _id.
+// datos coherentes y semánticamente correctos por dominio.
+// Usa catalogos-semanticos.js para lookups por (tabla, columna).
 // ============================================================
 
 const { faker } = require('@faker-js/faker');
+const { obtenerGeneradorSemantico } = require('./catalogos-semanticos');
 
 // -----------------------------------------------
 // Función principal pública
@@ -47,7 +49,7 @@ function generarTablasDesdeEsquema(esquema) {
 }
 
 // -----------------------------------------------
-// Ordenar tablas por dependencias (topológico simple)
+// Ordenar tablas por dependencias — Kahn's algorithm
 // -----------------------------------------------
 
 /**
@@ -115,7 +117,7 @@ function generarFilas(tablaEsquema, tablasYaGeneradas) {
   for (let i = 0; i < tablaEsquema.filas; i++) {
     const fila = {};
     for (const col of tablaEsquema.columnas) {
-      fila[col.nombre] = generarValor(col.nombre, col.tipo, i, tablasYaGeneradas);
+      fila[col.nombre] = generarValor(col.nombre, col.tipo, i, tablasYaGeneradas, tablaEsquema.nombre);
     }
     filas.push(fila);
   }
@@ -126,19 +128,34 @@ function generarFilas(tablaEsquema, tablasYaGeneradas) {
 // Generación de valor por columna
 // -----------------------------------------------
 
-function generarValor(nombre, tipo, indice, tablasGeneradas) {
+/**
+ * Genera el valor de una columna para la fila `indice`.
+ *
+ * Prioridad:
+ *   1. id propio → secuencial
+ *   2. _id foráneo → resolver FK
+ *   3. Generador semántico (tabla + columna) → valor del catálogo de dominio
+ *   4. Tipo fecha / booleano → generadores genéricos por patrón de nombre
+ *   5. Tipo numero → generadores genéricos por patrón de nombre
+ *   6. Tipo texto → generadores genéricos por patrón de nombre
+ */
+function generarValor(nombre, tipo, indice, tablasGeneradas, nombreTabla) {
   const n = nombre.toLowerCase();
 
-  // ID propio siempre es secuencial
+  // 1. ID propio → siempre secuencial
   if (n === 'id') return indice + 1;
 
-  // Referencia foránea: resolver contra tabla relacionada
+  // 2. Referencia foránea → resolver contra tabla ya generada
   if (n.endsWith('_id')) return resolverIdForaneo(n, tablasGeneradas);
 
+  // 3. Generador semántico específico por (tabla, columna)
+  const genSemantico = obtenerGeneradorSemantico(nombreTabla, n);
+  if (genSemantico !== null) return genSemantico(indice);
+
+  // 4–6. Fallback: generadores genéricos por tipo y patrón de nombre
   if (tipo === 'booleano') return faker.datatype.boolean() ? 1 : 0;
   if (tipo === 'fecha')    return generarFecha(n);
   if (tipo === 'numero')   return generarNumero(n);
-
   return generarTextoSegunNombre(n);
 }
 
@@ -157,7 +174,7 @@ function resolverIdForaneo(nombreCol, tablasGeneradas) {
 }
 
 // -----------------------------------------------
-// Generadores por tipo
+// Generadores genéricos por tipo
 // -----------------------------------------------
 
 function generarNumero(n) {
@@ -179,6 +196,12 @@ function generarNumero(n) {
     return parseFloat(faker.number.float({ min: 1, max: 10, fractionDigits: 1 }));
   if (/duracion|dias|horas/.test(n))
     return faker.number.int({ min: 1, max: 365 });
+  if (/presupuesto|budget/.test(n))
+    return faker.number.int({ min: 1000, max: 100000 });
+  if (/credito|credit/.test(n))
+    return faker.number.int({ min: 2, max: 6 });
+  if (/capacidad/.test(n))
+    return faker.number.int({ min: 2, max: 50 });
   return faker.number.int({ min: 1, max: 1000 });
 }
 
@@ -192,6 +215,10 @@ function generarFecha(n) {
     fecha = faker.date.past({ years: 3 });
   else if (/actualizacion|modificado/.test(n))
     fecha = faker.date.recent({ days: 365 });
+  else if (/inicio|start/.test(n))
+    fecha = faker.date.past({ years: 1 });
+  else if (/fin$|end$/.test(n))
+    fecha = faker.date.future({ years: 1 });
   else
     fecha = faker.date.past({ years: 2 });
 
@@ -200,8 +227,10 @@ function generarFecha(n) {
 
 function generarTextoSegunNombre(n) {
   // Persona
-  if (/^nombre$|^first_name$/.test(n))                         return faker.person.firstName();
-  if (/^apellido|^last_name/.test(n))                          return faker.person.lastName();
+  if (/^nombre$|^first_name$/.test(n))
+    return faker.person.firstName();
+  if (/^apellido|^last_name/.test(n))
+    return faker.person.lastName();
   if (/nombre_completo|full_name|nombre_paciente|nombre_cliente|nombre_empleado|nombre_proveedor|nombre_pasajero/.test(n))
     return faker.person.fullName();
 
@@ -211,49 +240,57 @@ function generarTextoSegunNombre(n) {
   if (/web|url|website/.test(n))            return faker.internet.url();
 
   // Ubicación
-  if (/ciudad|city/.test(n))               return faker.location.city();
-  if (/pais|country/.test(n))              return faker.location.country();
-  if (/estado|provincia|region/.test(n))   return faker.location.state();
+  if (/ciudad|city/.test(n))                return faker.location.city();
+  if (/pais|country/.test(n))               return faker.location.country();
+  if (/estado|provincia|region/.test(n))    return faker.location.state();
   if (/direccion|address|domicilio/.test(n)) return faker.location.streetAddress();
-  if (/codigo_postal|zip|cp/.test(n))      return faker.location.zipCode();
+  if (/codigo_postal|zip|cp/.test(n))       return faker.location.zipCode();
 
   // Producto / comercio
-  if (/^producto$|nombre_producto|^articulo$/.test(n)) return faker.commerce.productName();
-  if (/descripcion|description|detalle/.test(n))        return faker.commerce.productDescription();
-  if (/categoria|category/.test(n))                     return faker.commerce.department();
-  if (/marca|brand/.test(n))                            return faker.company.name();
-  if (/modelo|model/.test(n))                           return faker.vehicle.model();
-  if (/color/.test(n))                                  return faker.color.human();
-  if (/sku|codigo_producto|referencia/.test(n))         return faker.string.alphanumeric(8).toUpperCase();
-  if (/unidad/.test(n))                                 return faker.helpers.arrayElement(['kg', 'litro', 'unidad', 'caja', 'm2']);
+  if (/^producto$|nombre_producto|^articulo$/.test(n))
+    return faker.commerce.productName();
+  if (/descripcion|description|detalle/.test(n))
+    return faker.commerce.productDescription();
+  if (/categoria|category/.test(n))
+    return faker.commerce.department();
+  if (/^marca$|brand/.test(n))
+    return faker.company.name();
+  if (/^modelo$|model/.test(n))
+    return faker.vehicle.model();
+  if (/^color$/.test(n))
+    return faker.color.human();
+  if (/^sku$|codigo_producto|^referencia$/.test(n))
+    return faker.string.alphanumeric(8).toUpperCase();
+  if (/^unidad$/.test(n))
+    return faker.helpers.arrayElement(['kg', 'L', 'unidad', 'caja', 'm', 'm²']);
 
-  // Empresa
-  if (/empresa|company|compania|proveedor|organizacion/.test(n)) return faker.company.name();
-  if (/ruc|nit|rfc|cif|documento/.test(n))                       return faker.string.numeric(11);
+  // Empresa / organización
+  if (/nombre_empresa|^compania$|^organizacion$/.test(n))
+    return faker.company.name();
+  if (/^ruc$|^nit$|^rfc$|^cif$|^documento$/.test(n))
+    return faker.string.numeric(11);
 
-  // Vuelos / transporte
-  if (/destino|origen|aeropuerto/.test(n)) return faker.helpers.arrayElement(['MAD', 'BCN', 'MEX', 'BOG', 'LIM', 'BUE', 'MIA', 'LAX', 'JFK']);
-  if (/clase/.test(n))                     return faker.helpers.arrayElement(['Económica', 'Business', 'Primera']);
-  if (/asiento|seat/.test(n))              return faker.string.alpha(1).toUpperCase() + faker.number.int({ min: 1, max: 40 });
-  if (/equipaje|baggage/.test(n))          return faker.helpers.arrayElement(['Sin equipaje', '23kg', '32kg']);
-  if (/vuelo|flight/.test(n))              return faker.string.alpha(2).toUpperCase() + faker.string.numeric(4);
+  // Identificadores con prefijo
+  if (/^matricula$/.test(n))
+    return faker.string.alphanumeric(8).toUpperCase();
+  if (/^codigo$|^codigo_/.test(n))
+    return faker.string.alphanumeric(6).toUpperCase();
 
-  // Salud
-  if (/diagnostico|diagnosis/.test(n))     return faker.helpers.arrayElement(['Hipertensión', 'Diabetes', 'Anemia', 'Gripe', 'Lumbalgia', 'Migraña']);
-  if (/especialidad|specialty/.test(n))    return faker.helpers.arrayElement(['Cardiología', 'Pediatría', 'Traumatología', 'Neurología']);
-  if (/medicamento|medicina/.test(n))      return faker.helpers.arrayElement(['Paracetamol', 'Ibuprofeno', 'Amoxicilina', 'Omeprazol']);
-  if (/sala|room/.test(n))                return faker.helpers.arrayElement(['Urgencias', 'UCI', 'Consulta 1', 'Consulta 2']);
-
-  // Estado / tipo
-  if (/^estado$|^status$/.test(n))  return faker.helpers.arrayElement(['activo', 'inactivo', 'pendiente', 'completado']);
-  if (/^tipo$|^type$/.test(n))      return faker.helpers.arrayElement(['A', 'B', 'C']);
+  // Estado / tipo genérico (sólo si no fue capturado por semántico)
+  if (/^estado$|^status$/.test(n))
+    return faker.helpers.arrayElement(['activo', 'inactivo', 'pendiente', 'completado']);
+  if (/^tipo$|^type$/.test(n))
+    return faker.helpers.arrayElement(['Tipo A', 'Tipo B', 'Tipo C']);
 
   // Texto libre
-  if (/nota|observacion|comment/.test(n)) return faker.lorem.sentence();
-  if (/titulo|title/.test(n))             return faker.lorem.words(3);
+  if (/nota|observacion|comment/.test(n))  return faker.lorem.sentence();
+  if (/^titulo$|^title$/.test(n))          return faker.lorem.words(3);
+  if (/descripcion|description/.test(n))   return faker.lorem.sentence();
 
-  // Nombre genérico
-  if (/nombre/.test(n)) return faker.person.firstName() + ' ' + faker.person.lastName();
+  // Nombre genérico: SOLO si la columna se llama exactamente "nombre" o "nombre_*" sin mejor match
+  // Se hace al final para no capturar nombres de dominio (medicamento, especialidad, etc.)
+  if (/^nombre_/.test(n) || n === 'nombre')
+    return faker.commerce.productName();
 
   return faker.lorem.word();
 }
