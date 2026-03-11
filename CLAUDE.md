@@ -7,7 +7,7 @@ Guía para Claude Code al trabajar con este repositorio.
 Asistente de escritorio con IA para consultar bases de datos, construido con Electron + Node.js.
 Todo el texto de interfaz, comentarios y mensajes al usuario **deben estar en español**.
 
-## Versión actual: v0.6.4
+## Versión actual: v0.6.5
 
 Corrección de contaminación semántica y NL→SQL de nivel senior. Cambios sobre v0.6.3:
 
@@ -205,4 +205,5 @@ El renderer se comunica con el proceso principal via `window.api` (contextBridge
 | **v0.6.2** ✅ | Calidad semántica: catálogos reales, hospital 9 tablas, aeropuertos coherentes, generación table-aware |
 | **v0.6.3** ✅ | 15 dominios, base/extra split, enriquecimientoGenerico(), detección por puntuación, farmacia/banco/prisión/minería/universidad/logística/turismo/fábrica |
 | **v0.6.4** ✅ | Contaminación semántica corregida (dominio propagado por cadena de generación); NL→SQL de nivel senior con FK annotations, relaciones explícitas y patrones NL→SQL |
+| **v0.6.5** ✅ | Bugfix crítico: `necesitaEscape`/`escaparIdentificador` exportadas desde ejecutor-sql.js (chat roto); FK resolution robusta con `resolverRefTabla()` para singular/plural |
 | v0.7 | Historial de consultas, pulido UX, soporte SQLite real |

@@ -54,11 +54,43 @@ function convertirValor(valor, tipo) {
 /**
  * Envuelve un nombre de tabla o columna en comillas dobles para
  * manejar espacios, tildes y otros caracteres especiales.
+ * Alias: escaparIdentificador (exportada para uso en main.js).
  * @param {string} nombre
  * @returns {string}
  */
 function citarNombre(nombre) {
   return `"${String(nombre).replace(/"/g, '""')}"`;
+}
+
+/** Alias público de citarNombre, importado por main.js. */
+const escaparIdentificador = citarNombre;
+
+/**
+ * Determina si un identificador SQL necesita comillas dobles.
+ * Un identificador necesita comillas si:
+ *   - contiene caracteres distintos de letras, dígitos y guión bajo
+ *   - empieza por un dígito
+ *   - coincide con una palabra reservada SQL común
+ *
+ * @param {string} nombre
+ * @returns {boolean}
+ */
+function necesitaEscape(nombre) {
+  if (!nombre) return false;
+  // Caracteres especiales o inicio por dígito
+  if (/[^a-zA-Z0-9_]/.test(nombre) || /^\d/.test(nombre)) return true;
+  // Palabras reservadas habituales en SQLite / SQL estándar
+  const RESERVADAS = new Set([
+    'select', 'from', 'where', 'table', 'group', 'order', 'by',
+    'join', 'inner', 'outer', 'left', 'right', 'on', 'as', 'in',
+    'not', 'and', 'or', 'null', 'is', 'like', 'limit', 'offset',
+    'union', 'all', 'distinct', 'having', 'count', 'sum', 'avg',
+    'max', 'min', 'case', 'when', 'then', 'else', 'end', 'insert',
+    'update', 'delete', 'drop', 'create', 'alter', 'index', 'view',
+    'trigger', 'primary', 'key', 'foreign', 'references', 'unique',
+    'default', 'check', 'between', 'exists', 'with',
+  ]);
+  return RESERVADAS.has(nombre.toLowerCase());
 }
 
 /**
@@ -150,4 +182,4 @@ function ejecutarConsulta(db, sql) {
   };
 }
 
-module.exports = { crearDBDesdeDatos, ejecutarConsulta };
+module.exports = { crearDBDesdeDatos, ejecutarConsulta, escaparIdentificador, necesitaEscape };

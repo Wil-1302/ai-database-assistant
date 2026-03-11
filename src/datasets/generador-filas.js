@@ -69,14 +69,11 @@ function ordenarPorDependencias(tablas) {
   for (const tabla of tablas) {
     for (const col of tabla.columnas) {
       if (!col.nombre.endsWith('_id')) continue;
-      const ref = col.nombre.slice(0, -3);
-      // Buscar tabla referenciada (igual, plural con s, plural con es, o raíz sin s)
-      const candidatos = [ref, ref + 's', ref + 'es'];
-      for (const candidato of candidatos) {
-        if (nombres.includes(candidato) && candidato !== tabla.nombre) {
-          deps.get(tabla.nombre).add(candidato);
-          break;
-        }
+      const ref      = col.nombre.slice(0, -3);
+      // Usar resolverRefTabla para soportar cualquier variante singular/plural
+      const objetivo = resolverRefTabla(ref, nombres);
+      if (objetivo && objetivo !== tabla.nombre) {
+        deps.get(tabla.nombre).add(objetivo);
       }
     }
   }
@@ -161,17 +158,62 @@ function generarValor(nombre, tipo, indice, tablasGeneradas, nombreTabla, domini
   return generarTextoSegunNombre(n);
 }
 
+/**
+ * Resuelve el nombre real de la tabla referenciada por un sufijo _id.
+ * Prueba varias estrategias: exacto, con 's', con 'es', sin 's', sin 'es',
+ * y comparación de raíces (para manejar cualquier combinación singular/plural
+ * que Ollama o el enriquecedor puedan generar).
+ *
+ * @param {string} ref - Raíz del nombre (col.nombre sin '_id')
+ * @param {string[]} nombres - Nombres de tablas disponibles
+ * @returns {string|null} - Nombre de tabla encontrado o null
+ */
+function resolverRefTabla(ref, nombres) {
+  // 1. Coincidencia exacta (tabla llamada igual que la raíz)
+  if (nombres.includes(ref)) return ref;
+
+  // 2. Pluralización añadiendo 's' (cliente → clientes, medicamento → medicamentos)
+  if (nombres.includes(ref + 's')) return ref + 's';
+
+  // 3. Pluralización añadiendo 'es' (proveedor → proveedores, ciudad → ciudades)
+  if (nombres.includes(ref + 'es')) return ref + 'es';
+
+  // 4. La raíz es el plural: quitar 's' para obtener el nombre singular en la tabla
+  //    (clientes_id → 'clientes' → tabla 'cliente')
+  if (ref.endsWith('s') && nombres.includes(ref.slice(0, -1)))
+    return ref.slice(0, -1);
+
+  // 5. La raíz es el plural: quitar 'es' (proveedores → proveedor)
+  if (ref.endsWith('es') && nombres.includes(ref.slice(0, -2)))
+    return ref.slice(0, -2);
+
+  // 6. Comparación de raíces normalizadas: eliminar 's' o 'es' de ambos lados
+  //    Útil cuando la tabla usa 'detalle_venta' y la FK dice 'detalle_ventas_id'
+  const refBase = ref.endsWith('es') ? ref.slice(0, -2)
+    : ref.endsWith('s') ? ref.slice(0, -1) : ref;
+
+  for (const n of nombres) {
+    const nBase = n.endsWith('es') ? n.slice(0, -2)
+      : n.endsWith('s') ? n.slice(0, -1) : n;
+    if (refBase === nBase && refBase.length > 2) return n;
+  }
+
+  return null;
+}
+
 function resolverIdForaneo(nombreCol, tablasGeneradas) {
-  const ref = nombreCol.slice(0, -3);
-  const tablaRef = tablasGeneradas.find(
-    (t) => t.nombre === ref || t.nombre === ref + 's' || t.nombre === ref + 'es' ||
-           ref === t.nombre + 's' || ref === t.nombre + 'es'
-  );
+  const ref      = nombreCol.slice(0, -3);
+  const nombres  = tablasGeneradas.map((t) => t.nombre);
+  const nombreTabla = resolverRefTabla(ref, nombres);
+  const tablaRef = nombreTabla
+    ? tablasGeneradas.find((t) => t.nombre === nombreTabla)
+    : null;
+
   if (tablaRef && tablaRef.filas.length > 0) {
     return faker.number.int({ min: 1, max: tablaRef.filas.length });
   }
   // Fallback: la tabla referenciada no se ha generado todavía o no existe
-  console.warn(`[generador-filas] FK no resuelta para "${nombreCol}" (referencia "${ref}" no encontrada). Usando rango genérico.`);
+  console.warn(`[generador-filas] FK no resuelta para "${nombreCol}" (ref "${ref}" no encontrada). Usando rango genérico.`);
   return faker.number.int({ min: 1, max: 50 });
 }
 
